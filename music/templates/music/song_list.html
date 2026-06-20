@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Music Hub</title>
+</head>
+<body>
+
+<h1>🎵 Song List</h1>
+
+<ul>
+    {% for song in songs %}
+        <li>
+            <strong>{{ song.title }}</strong> -
+            {{ song.artist }} ({{ song.genre }})
+        </li>
+    {% empty %}
+        <li>No songs available</li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
