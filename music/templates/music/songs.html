@@ -1,0 +1,29 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+
+<h2>Songs</h2>
+
+<div class="row">
+    {% for song in songs %}
+    <div class="col-md-4 mb-3">
+        <div class="card shadow-sm">
+            <div class="card-body">
+
+                <h5>{{ song.title }}</h5>
+                <p>{{ song.artist }}</p>
+                <p>{{ song.genre }}</p>
+
+                {% if song.youtube_link %}
+                <a href="{{ song.youtube_link }}" target="_blank" class="btn btn-danger btn-sm">
+                    YouTube
+                </a>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

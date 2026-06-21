@@ -1,0 +1,25 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+
+<h2>Artists</h2>
+
+<div class="row">
+    {% for artist in artists %}
+    <div class="col-md-3 mb-3">
+        <div class="card text-center shadow-sm p-3">
+
+            {% if artist.image %}
+            <img src="{{ artist.image.url }}" class="rounded-circle mx-auto" width="80">
+            {% else %}
+            <div class="rounded-circle bg-secondary mx-auto" style="width:80px;height:80px;"></div>
+            {% endif %}
+
+            <h5 class="mt-2">{{ artist.name }}</h5>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

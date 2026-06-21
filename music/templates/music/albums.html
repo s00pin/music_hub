@@ -1,0 +1,26 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+
+<h2>Albums</h2>
+
+<div class="row">
+    {% for album in albums %}
+    <div class="col-md-3 mb-3">
+        <div class="card shadow-sm">
+
+            {% if album.cover %}
+            <img src="{{ album.cover.url }}" class="card-img-top">
+            {% endif %}
+
+            <div class="card-body text-center">
+                <h5>{{ album.title }}</h5>
+                <p>{{ album.artist }}</p>
+            </div>
+
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}

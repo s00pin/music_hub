@@ -3,6 +3,8 @@ from .views import home
 from . import views
 
 urlpatterns = [
-    path('', home, name='home'),
-    path('songs/', views.song_list, name='song-list'),
+    path('', views.home, name='home'),
+    path('songs/', views.songs, name='songs'),
+    path('artists/', views.artists, name='artists'),
+    path('albums/', views.albums, name='albums'),
 ]
