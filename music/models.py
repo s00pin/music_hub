@@ -5,7 +5,7 @@ from django.db import models
 #artist model
 class Artist(models.Model):
     name = models.CharField(max_length=200)
-    image = models.ImageField(upload_to='artists/', blank=True)
+    image = models.ImageField(upload_to='artists/', blank=True, null=True)
 
     def __str__(self):
         return self.name
@@ -20,7 +20,8 @@ class Album(models.Model):
 
     cover = models.ImageField(
         upload_to='albums/',
-        blank=True
+        blank=True,
+        null=True
     )
 
     release_date = models.DateField(
