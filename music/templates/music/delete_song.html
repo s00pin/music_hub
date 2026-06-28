@@ -1,0 +1,45 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+
+<div class="card">
+
+<div class="card-body">
+
+<h2>Delete Song</h2>
+
+<p>
+
+Delete
+
+<strong>{{ song.title }}</strong>?
+
+</p>
+
+<form method="POST">
+
+{% csrf_token %}
+
+<button class="btn btn-danger">
+
+Delete
+
+</button>
+
+<a href="{% url 'songs' %}" class="btn btn-secondary">
+
+Cancel
+
+</a>
+
+</form>
+
+</div>
+
+</div>
+
+</div>
+
+{% endblock %}
