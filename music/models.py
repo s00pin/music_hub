@@ -61,3 +61,17 @@ class Song(models.Model):
 
     def __str__(self):
         return self.title
+
+
+class FavoriteSong(models.Model):
+    session_key = models.CharField(max_length=40, db_index=True)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name="favorites")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["session_key", "song"], name="unique_session_song_favorite"),
+        ]
+
+    def __str__(self):
+        return f"{self.session_key} -> {self.song.title}"

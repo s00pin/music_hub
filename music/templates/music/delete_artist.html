@@ -2,8 +2,8 @@
 
 {% block content %}
 <section class="panel form-card">
-    <h2 class="mb-2">Delete Song</h2>
-    <p class="entity-sub">Delete <strong>{{ song.title }}</strong>? This cannot be undone.</p>
+    <h2 class="mb-2">Delete Artist</h2>
+    <p class="entity-sub">Delete <strong>{{ artist.name }}</strong>? This cannot be undone.</p>
 
     <form method="post" class="d-flex gap-2 mt-3">
         {% csrf_token %}

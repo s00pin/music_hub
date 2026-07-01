@@ -1,0 +1,33 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>Favorite Songs</h2>
+        <a href="{% url 'songs' %}" class="btn btn-soft btn-sm">Browse Songs</a>
+    </div>
+
+    <div class="card-grid">
+        {% for song in songs %}
+            <div class="entity-card">
+                <a href="{% url 'song-detail' song.id %}">
+                    {% if song.album and song.album.cover %}
+                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3">
+                    {% else %}
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    {% endif %}
+                    <p class="entity-title">{{ song.title }}</p>
+                </a>
+                <p class="entity-sub mb-2">{{ song.artist.name }}{% if song.album %} &middot; {{ song.album.title }}{% endif %}</p>
+                <span class="tag">{{ song.genre }}</span>
+                <div class="mt-3">
+                    <button class="favorite-btn is-favorite" data-song-id="{{ song.id }}" data-is-favorite="true">Favorited</button>
+                </div>
+            </div>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No favorites yet. Mark songs with the Favorite button.</p></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+

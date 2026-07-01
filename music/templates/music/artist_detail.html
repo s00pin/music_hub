@@ -1,0 +1,64 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<section class="panel detail-hero mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-md-3">
+            {% if artist.image %}
+                <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art">
+            {% else %}
+                <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art">
+            {% endif %}
+        </div>
+        <div class="col-md-9">
+            <h1 class="mb-2">{{ artist.name }}</h1>
+            <p class="detail-meta mb-3">{{ albums|length }} album{{ albums|length|pluralize }} &middot; {{ songs|length }} song{{ songs|length|pluralize }}</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'edit-artist' artist.id %}" class="btn btn-soft">Edit Artist</a>
+                <a href="{% url 'delete-artist' artist.id %}" class="btn btn-outline-danger">Delete Artist</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="panel p-4 mb-4">
+    <div class="section-head">
+        <h2>Albums by {{ artist.name }}</h2>
+    </div>
+    <div class="card-grid">
+        {% for album in albums %}
+            <a href="{% url 'album-detail' album.id %}" class="entity-card">
+                {% if album.cover %}
+                    <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3">
+                {% else %}
+                    <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                {% endif %}
+                <p class="entity-title">{{ album.title }}</p>
+                <p class="entity-sub">{{ album.release_date|default:'Release date unknown' }}</p>
+            </a>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No albums available.</p></div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>Songs by {{ artist.name }}</h2>
+    </div>
+    <ul class="list-clean">
+        {% for song in songs %}
+            <li class="d-flex justify-content-between align-items-center gap-2">
+                <a href="{% url 'song-detail' song.id %}" class="d-flex justify-content-between align-items-center flex-grow-1">
+                    <span>{{ song.title }}</span>
+                    <span class="entity-sub">{% if song.album %}{{ song.album.title }}{% else %}Single{% endif %} &middot; {{ song.genre }}</span>
+                </a>
+                <button class="favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if song.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
+            </li>
+        {% empty %}
+            <li class="entity-sub">No songs available.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}
+

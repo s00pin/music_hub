@@ -1,79 +1,36 @@
 {% extends 'music/base.html' %}
 
 {% block content %}
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>All Songs</h2>
+        <a href="{% url 'add-song' %}" class="btn btn-accent btn-sm">Add Song</a>
+    </div>
 
-<div class="d-flex justify-content-between mb-3">
+    <div class="card-grid">
+        {% for song in songs %}
+            <div class="entity-card">
+                <a href="{% url 'song-detail' song.id %}">
+                    {% if song.album and song.album.cover %}
+                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3">
+                    {% else %}
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    {% endif %}
+                    <p class="entity-title">{{ song.title }}</p>
+                </a>
+                <p class="entity-sub mb-1">{{ song.artist.name }}{% if song.album %} &middot; {{ song.album.title }}{% endif %}</p>
+                <span class="tag">{{ song.genre }}</span>
 
-<h2>Songs</h2>
-
-<a href="/songs/add/" class="btn btn-primary">
-
-+ Add Song
-
-</a>
-
-</div>
-
-<table class="table table-hover">
-
-<thead>
-
-<tr>
-
-<th>Title</th>
-
-<th>Artist</th>
-
-<th>Album</th>
-
-<th>Genre</th>
-
-<th></th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for song in songs %}
-
-<tr>
-
-<td>{{ song.title }}</td>
-
-<td>{{ song.artist }}</td>
-
-<td>{{ song.album }}</td>
-
-<td>{{ song.genre }}</td>
-
-<td>
-
-<a
-class="btn btn-warning btn-sm"
-href="/songs/edit/{{ song.id }}/">
-
-Edit
-
-</a>
-
-<a
-class="btn btn-danger btn-sm"
-href="/songs/delete/{{ song.id }}/">
-
-Delete
-
-</a>
-
-</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
+                <div class="d-flex gap-2 mt-3 flex-wrap">
+                    <button class="favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if song.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-song' song.id %}">Edit</a>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-song' song.id %}">Delete</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No songs added yet.</p></div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
+

@@ -1,26 +1,33 @@
 {% extends 'music/base.html' %}
 
 {% block content %}
-
-<h2>Albums</h2>
-
-<div class="row">
-    {% for album in albums %}
-    <div class="col-md-3 mb-3">
-        <div class="card shadow-sm">
-
-            {% if album.cover %}
-            <img src="{{ album.cover.url }}" class="card-img-top">
-            {% endif %}
-
-            <div class="card-body text-center">
-                <h5>{{ album.title }}</h5>
-                <p>{{ album.artist }}</p>
-            </div>
-
-        </div>
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>All Albums</h2>
+        <a href="{% url 'add-album' %}" class="btn btn-accent btn-sm">Add Album</a>
     </div>
-    {% endfor %}
-</div>
 
+    <div class="card-grid">
+        {% for album in albums %}
+            <div class="entity-card">
+                <a href="{% url 'album-detail' album.id %}">
+                    {% if album.cover %}
+                        <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3">
+                    {% else %}
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    {% endif %}
+                    <p class="entity-title">{{ album.title }}</p>
+                </a>
+                <p class="entity-sub mb-1">{{ album.artist.name }} &middot; {{ album.song_count }} song{{ album.song_count|pluralize }}</p>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-album' album.id %}">Edit</a>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-album' album.id %}">Delete</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No albums added yet.</p></div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}

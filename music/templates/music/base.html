@@ -1,49 +1,228 @@
+{% load static %}
 <!DOCTYPE html>
-<html>
+<html lang="en" data-theme="light">
 <head>
-    <title>Music Hub</title>
-
-    <!-- Bootstrap -->
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .navbar-brand {
-            font-weight: bold;
-        }
-        .profile-icon {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: gray;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>&#127925; Music Hub</title>
+    <link rel="icon" type="image/svg+xml" href="{% static 'music/favicon.svg' %}">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'music/styles.css' %}">
 </head>
-
 <body>
+    <div class="nav-shell">
+        <nav class="navbar navbar-expand-lg navbar-dark">
+            <div class="container-fluid px-0">
+                <a class="navbar-brand" href="{% url 'home' %}"><span class="brand-icon">&#127925;</span> Music Hub</a>
 
-<!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-3">
-    <a class="navbar-brand" href="/">🎵 Music Hub</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-    <div class="ms-auto d-flex gap-3">
-        <a class="nav-link text-white" href="/songs/">Songs</a>
-        <a class="nav-link text-white" href="/artists/">Artists</a>
-        <a class="nav-link text-white" href="/albums/">Albums</a>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <div class="nav-links navbar-nav ms-lg-3 me-lg-4 gap-lg-2">
+                        <a class="nav-link{% if request.resolver_match.url_name == 'songs' %} active{% endif %}" href="{% url 'songs' %}">Songs</a>
+                        <a class="nav-link{% if request.resolver_match.url_name == 'artists' %} active{% endif %}" href="{% url 'artists' %}">Artists</a>
+                        <a class="nav-link{% if request.resolver_match.url_name == 'albums' %} active{% endif %}" href="{% url 'albums' %}">Albums</a>
+                        <a class="nav-link{% if request.resolver_match.url_name == 'listen-links' %} active{% endif %}" href="{% url 'listen-links' %}">Listen</a>
+                        <a class="nav-link{% if request.resolver_match.url_name == 'favorites' %} active{% endif %}" href="{% url 'favorites' %}">Favorites</a>
+                    </div>
 
-        <!-- Profile placeholder -->
-        <div class="profile-icon"></div>
+                    <div class="d-flex ms-lg-auto mt-3 mt-lg-0 gap-2 align-items-center flex-wrap nav-actions">
+                        <form class="d-flex" action="{% url 'search-results' %}" method="get" autocomplete="off">
+                            <div class="search-wrap">
+                                <input
+                                    id="global-search"
+                                    class="search-input"
+                                    type="search"
+                                    name="q"
+                                    value="{{ request.GET.q|default:'' }}"
+                                    placeholder="Search artist, album, or song"
+                                    aria-label="Search"
+                                >
+                                <ul id="suggestions" class="suggestion-list"></ul>
+                            </div>
+                        </form>
+
+                        <select id="theme-mode" class="form-select theme-select" aria-label="Theme mode">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="system">System</option>
+                            <option value="time">Time</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </nav>
     </div>
-</nav>
 
-<!-- PAGE CONTENT -->
-<div class="container mt-4">
-    {% block content %}
-    {% endblock %}
-</div>
+    <main class="page-shell">
+        {% block content %}{% endblock %}
+    </main>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <script>
+        (() => {
+            const root = document.documentElement;
+            const themeSelect = document.getElementById("theme-mode");
+            const storageKey = "music-hub-theme-mode";
+
+            const resolveTheme = (mode) => {
+                if (mode === "dark") return "dark";
+                if (mode === "light") return "light";
+                if (mode === "system") {
+                    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+                }
+                const hour = new Date().getHours();
+                return hour >= 19 || hour < 6 ? "dark" : "light";
+            };
+
+            const applyThemeMode = (mode) => {
+                const activeTheme = resolveTheme(mode);
+                root.setAttribute("data-theme", activeTheme);
+                if (themeSelect) themeSelect.value = mode;
+            };
+
+            const savedMode = localStorage.getItem(storageKey) || "system";
+            applyThemeMode(savedMode);
+
+            if (themeSelect) {
+                themeSelect.addEventListener("change", (event) => {
+                    const selectedMode = event.target.value;
+                    localStorage.setItem(storageKey, selectedMode);
+                    applyThemeMode(selectedMode);
+                });
+            }
+
+            const systemMedia = window.matchMedia("(prefers-color-scheme: dark)");
+            systemMedia.addEventListener("change", () => {
+                const mode = localStorage.getItem(storageKey) || "system";
+                if (mode === "system") {
+                    applyThemeMode(mode);
+                }
+            });
+
+            setInterval(() => {
+                const mode = localStorage.getItem(storageKey) || "system";
+                if (mode === "time") {
+                    applyThemeMode(mode);
+                }
+            }, 60000);
+        })();
+
+        (() => {
+            const input = document.getElementById("global-search");
+            const list = document.getElementById("suggestions");
+            const endpoint = "{% url 'search-suggestions' %}";
+            let timer = null;
+
+            if (!input || !list) {
+                return;
+            }
+
+            const closeSuggestions = () => {
+                list.classList.remove("show");
+                list.innerHTML = "";
+            };
+
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    closeSuggestions();
+                }
+            });
+
+            input.addEventListener("input", () => {
+                const value = input.value.trim();
+                clearTimeout(timer);
+
+                if (value.length < 2) {
+                    closeSuggestions();
+                    return;
+                }
+
+                timer = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`${endpoint}?q=${encodeURIComponent(value)}`);
+                        const data = await response.json();
+                        list.innerHTML = "";
+
+                        if (!data.results || data.results.length === 0) {
+                            closeSuggestions();
+                            return;
+                        }
+
+                        data.results.forEach((result) => {
+                            const li = document.createElement("li");
+                            const a = document.createElement("a");
+                            a.href = result.url;
+                            a.className = "suggestion-item";
+                            a.innerHTML = `<span class=\"suggestion-type\">${result.type}</span>${result.label}`;
+                            li.appendChild(a);
+                            list.appendChild(li);
+                        });
+
+                        list.classList.add("show");
+                    } catch (error) {
+                        closeSuggestions();
+                    }
+                }, 180);
+            });
+
+            document.addEventListener("click", (event) => {
+                if (!list.contains(event.target) && event.target !== input) {
+                    closeSuggestions();
+                }
+            });
+        })();
+
+        (() => {
+            const getCookie = (name) => {
+                const cookieValue = document.cookie
+                    .split('; ')
+                    .find((row) => row.startsWith(`${name}=`));
+                return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : "";
+            };
+
+            const csrfToken = getCookie("csrftoken");
+
+            const updateFavoriteButtons = (songId, isFavorite) => {
+                document.querySelectorAll(`.favorite-btn[data-song-id=\"${songId}\"]`).forEach((button) => {
+                    button.dataset.isFavorite = isFavorite ? "true" : "false";
+                    button.classList.toggle("is-favorite", isFavorite);
+                    button.textContent = isFavorite ? "Favorited" : "Favorite";
+                });
+            };
+
+            document.addEventListener("click", async (event) => {
+                const button = event.target.closest(".favorite-btn");
+                if (!button) {
+                    return;
+                }
+
+                event.preventDefault();
+                const songId = button.dataset.songId;
+                if (!songId) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/songs/${songId}/favorite-toggle/`, {
+                        method: "POST",
+                        headers: {
+                            "X-CSRFToken": csrfToken,
+                        },
+                    });
+                    const data = await response.json();
+                    if (response.ok && data.ok) {
+                        updateFavoriteButtons(songId, data.is_favorite);
+                    }
+                } catch (error) {
+                    // no-op
+                }
+            });
+        })();
+    </script>
+
+    {% block extra_scripts %}{% endblock %}
 </body>
 </html>

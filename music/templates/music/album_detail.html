@@ -1,0 +1,44 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<section class="panel detail-hero mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-md-3">
+            {% if album.cover %}
+                <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art">
+            {% else %}
+                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art">
+            {% endif %}
+        </div>
+        <div class="col-md-9">
+            <h1 class="mb-2">{{ album.title }}</h1>
+            <p class="detail-meta mb-1">By <a href="{% url 'artist-detail' album.artist.id %}">{{ album.artist.name }}</a></p>
+            <p class="detail-meta mb-3">Released: {{ album.release_date|default:'Unknown' }} &middot; {{ songs|length }} track{{ songs|length|pluralize }}</p>
+            <div class="d-flex gap-2">
+                <a href="{% url 'edit-album' album.id %}" class="btn btn-soft">Edit Album</a>
+                <a href="{% url 'delete-album' album.id %}" class="btn btn-outline-danger">Delete Album</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>Track List</h2>
+    </div>
+    <ul class="list-clean">
+        {% for song in songs %}
+            <li class="d-flex justify-content-between align-items-center gap-2">
+                <a href="{% url 'song-detail' song.id %}" class="d-flex justify-content-between align-items-center flex-grow-1">
+                    <span>{{ song.title }}</span>
+                    <span class="entity-sub">{{ song.genre }} &middot; {{ song.release_date|default:'Date unknown' }}</span>
+                </a>
+                <button class="favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if song.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
+            </li>
+        {% empty %}
+            <li class="entity-sub">No songs linked to this album yet.</li>
+        {% endfor %}
+    </ul>
+</section>
+{% endblock %}
+

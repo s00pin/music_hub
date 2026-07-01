@@ -1,0 +1,142 @@
+{% extends 'music/base.html' %}
+
+{% block content %}
+<section class="panel detail-hero mb-4">
+    <div class="row g-4 align-items-center">
+        <div class="col-md-3">
+            {% if song.album and song.album.cover %}
+                <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art">
+            {% else %}
+                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art">
+            {% endif %}
+        </div>
+        <div class="col-md-9">
+            <h1 class="mb-2">{{ song.title }}</h1>
+            <p class="detail-meta mb-3">
+                Artist: <a href="{% url 'artist-detail' song.artist.id %}">{{ song.artist.name }}</a>
+                {% if song.album %}
+                    &middot; Album: <a href="{% url 'album-detail' song.album.id %}">{{ song.album.title }}</a>
+                {% endif %}
+            </p>
+            <div class="d-flex flex-wrap gap-2 mb-3">
+                <span class="tag">{{ song.genre }}</span>
+                {% if song.release_date %}<span class="tag">{{ song.release_date }}</span>{% endif %}
+            </div>
+            <div class="d-flex gap-2 mt-3 flex-wrap">
+                <button class="favorite-btn{% if is_favorite %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if is_favorite %}true{% else %}false{% endif %}">{% if is_favorite %}Favorited{% else %}Favorite{% endif %}</button>
+                <a href="{% url 'edit-song' song.id %}" class="btn btn-soft">Edit Song</a>
+                <a href="{% url 'delete-song' song.id %}" class="btn btn-outline-danger">Delete Song</a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="panel p-4 mb-4" id="platform-links-panel" data-song-id="{{ song.id }}">
+    <div class="section-head">
+        <h2>Where to Listen or Watch</h2>
+        <p class="geo-note mb-0" id="geo-note">Using global options.</p>
+    </div>
+
+    <div class="platform-grid" id="platform-links">
+        {% for link in default_platform_links %}
+            <a class="platform-btn" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.name }}</a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>More from {{ song.artist.name }}</h2>
+    </div>
+    <div class="card-grid">
+        {% for item in related_songs %}
+            <div class="entity-card">
+                <a href="{% url 'song-detail' item.id %}">
+                    {% if item.album and item.album.cover %}
+                        <img src="{{ item.album.cover.url }}" alt="{{ item.title }}" class="entity-art mb-3">
+                    {% else %}
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    {% endif %}
+                    <p class="entity-title">{{ item.title }}</p>
+                </a>
+                <p class="entity-sub mb-2">{% if item.album %}{{ item.album.title }}{% else %}Single{% endif %} &middot; {{ item.genre }}</p>
+                <button class="favorite-btn{% if item.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ item.id }}" data-is-favorite="{% if item.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if item.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
+            </div>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No related songs found.</p></div>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(() => {
+    const panel = document.getElementById("platform-links-panel");
+    const linksContainer = document.getElementById("platform-links");
+    const geoNote = document.getElementById("geo-note");
+
+    if (!panel || !linksContainer || !geoNote) {
+        return;
+    }
+
+    const songId = panel.dataset.songId;
+
+    const renderLinks = (links) => {
+        linksContainer.innerHTML = "";
+        links.forEach((item) => {
+            const a = document.createElement("a");
+            a.className = "platform-btn";
+            a.href = item.url;
+            a.target = "_blank";
+            a.rel = "noopener noreferrer";
+            a.textContent = item.name;
+            linksContainer.appendChild(a);
+        });
+    };
+
+    const loadByCountry = async (countryCode) => {
+        const response = await fetch(`/songs/${songId}/platform-options/?country=${encodeURIComponent(countryCode)}`);
+        const data = await response.json();
+        if (data.links && data.links.length) {
+            renderLinks(data.links);
+        }
+        if (data.country) {
+            geoNote.textContent = `Location detected (${data.country}). Showing local options first.`;
+        }
+    };
+
+    const reverseCountry = async (lat, lon) => {
+        const url = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=en`;
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.countryCode || "";
+    };
+
+    if (!navigator.geolocation) {
+        geoNote.textContent = "Geolocation not available. Showing global options.";
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        async (position) => {
+            try {
+                const countryCode = await reverseCountry(position.coords.latitude, position.coords.longitude);
+                if (countryCode) {
+                    await loadByCountry(countryCode);
+                } else {
+                    geoNote.textContent = "Location lookup unavailable. Showing global options.";
+                }
+            } catch (error) {
+                geoNote.textContent = "Location lookup failed. Showing global options.";
+            }
+        },
+        () => {
+            geoNote.textContent = "Location permission denied. Showing global options.";
+        },
+        { timeout: 8000, enableHighAccuracy: false }
+    );
+})();
+</script>
+{% endblock %}
+

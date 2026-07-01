@@ -1,25 +1,33 @@
 {% extends 'music/base.html' %}
 
 {% block content %}
-
-<h2>Artists</h2>
-
-<div class="row">
-    {% for artist in artists %}
-    <div class="col-md-3 mb-3">
-        <div class="card text-center shadow-sm p-3">
-
-            {% if artist.image %}
-            <img src="{{ artist.image.url }}" class="rounded-circle mx-auto" width="80">
-            {% else %}
-            <div class="rounded-circle bg-secondary mx-auto" style="width:80px;height:80px;"></div>
-            {% endif %}
-
-            <h5 class="mt-2">{{ artist.name }}</h5>
-
-        </div>
+<section class="panel p-4">
+    <div class="section-head">
+        <h2>All Artists</h2>
+        <a href="{% url 'add-artist' %}" class="btn btn-accent btn-sm">Add Artist</a>
     </div>
-    {% endfor %}
-</div>
 
+    <div class="card-grid">
+        {% for artist in artists %}
+            <div class="entity-card">
+                <a href="{% url 'artist-detail' artist.id %}">
+                    {% if artist.image %}
+                        <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art mb-3">
+                    {% else %}
+                        <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    {% endif %}
+                    <p class="entity-title">{{ artist.name }}</p>
+                </a>
+                <p class="entity-sub mb-1">{{ artist.album_count }} album{{ artist.album_count|pluralize }} &middot; {{ artist.song_count }} song{{ artist.song_count|pluralize }}</p>
+
+                <div class="d-flex gap-2 mt-3">
+                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-artist' artist.id %}">Edit</a>
+                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-artist' artist.id %}">Delete</a>
+                </div>
+            </div>
+        {% empty %}
+            <div class="entity-card"><p class="entity-sub mb-0">No artists added yet.</p></div>
+        {% endfor %}
+    </div>
+</section>
 {% endblock %}
