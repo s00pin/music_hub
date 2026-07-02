@@ -65,9 +65,9 @@
         {% for artist in featured_artists %}
             <a href="{% url 'artist-detail' artist.id %}" class="entity-card">
                 {% if artist.image %}
-                    <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art mb-3">
+                    <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ artist_placeholder }}">
                 {% else %}
-                    <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                 {% endif %}
                 <p class="entity-title">{{ artist.name }}</p>
                 <p class="entity-sub">{{ artist.song_count }} song{{ artist.song_count|pluralize }}</p>
@@ -87,9 +87,9 @@
         {% for album in featured_albums %}
             <a href="{% url 'album-detail' album.id %}" class="entity-card">
                 {% if album.cover %}
-                    <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3">
+                    <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
                 {% else %}
-                    <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                 {% endif %}
                 <p class="entity-title">{{ album.title }}</p>
                 <p class="entity-sub">{{ album.artist.name }}</p>
@@ -110,9 +110,9 @@
             <div class="entity-card">
                 <a href="{% url 'song-detail' song.id %}">
                     {% if song.album and song.album.cover %}
-                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3">
+                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
                     {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                     {% endif %}
                     <p class="entity-title">{{ song.title }}</p>
                 </a>

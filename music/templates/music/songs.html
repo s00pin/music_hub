@@ -12,9 +12,9 @@
             <div class="entity-card">
                 <a href="{% url 'song-detail' song.id %}">
                     {% if song.album and song.album.cover %}
-                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3">
+                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
                     {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                     {% endif %}
                     <p class="entity-title">{{ song.title }}</p>
                 </a>

@@ -5,9 +5,9 @@
     <div class="row g-4 align-items-center">
         <div class="col-md-3">
             {% if song.album and song.album.cover %}
-                <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art">
+                <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art entity-art-detail" loading="lazy" data-fallback="{{ album_placeholder }}">
             {% else %}
-                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art">
+                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art entity-art-detail" loading="lazy">
             {% endif %}
         </div>
         <div class="col-md-9">
@@ -53,9 +53,9 @@
             <div class="entity-card">
                 <a href="{% url 'song-detail' item.id %}">
                     {% if item.album and item.album.cover %}
-                        <img src="{{ item.album.cover.url }}" alt="{{ item.title }}" class="entity-art mb-3">
+                        <img src="{{ item.album.cover.url }}" alt="{{ item.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
                     {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                     {% endif %}
                     <p class="entity-title">{{ item.title }}</p>
                 </a>

@@ -11,9 +11,9 @@
         {% for song in songs %}
             <div class="entity-card">
                 {% if song.album and song.album.cover %}
-                    <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3">
+                    <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
                 {% else %}
-                    <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3">
+                    <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
                 {% endif %}
                 <p class="entity-title">{{ song.title }}</p>
                 <p class="entity-sub mb-3">{{ song.artist.name }}{% if song.album %} &middot; {{ song.album.title }}{% endif %}</p>

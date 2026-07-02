@@ -5,9 +5,9 @@
     <div class="row g-4 align-items-center">
         <div class="col-md-3">
             {% if album.cover %}
-                <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art">
+                <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art entity-art-detail" loading="lazy" data-fallback="{{ album_placeholder }}">
             {% else %}
-                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art">
+                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art entity-art-detail" loading="lazy">
             {% endif %}
         </div>
         <div class="col-md-9">

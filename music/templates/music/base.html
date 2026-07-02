@@ -64,6 +64,22 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
     <script>
         (() => {
+            document.querySelectorAll("img[data-fallback]").forEach((img) => {
+                const fallback = img.dataset.fallback;
+                if (!fallback) {
+                    return;
+                }
+
+                img.addEventListener("error", () => {
+                    if (img.src !== fallback) {
+                        img.src = fallback;
+                        img.classList.add("is-fallback");
+                    }
+                });
+            });
+        })();
+
+        (() => {
             const root = document.documentElement;
             const themeSelect = document.getElementById("theme-mode");
             const storageKey = "music-hub-theme-mode";
