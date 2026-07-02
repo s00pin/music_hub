@@ -12,3 +12,10 @@ venv/
 staticfiles/
 *.sqlite3
 music/views.py.bak_*
+
+# local env/build artifacts
+.venv/
+venv/
+staticfiles/
+*.sqlite3
+music/views.py.bak_*
