@@ -6,3 +6,9 @@ db.sqlite3
 
 venv/
 ENV/
+# local env/build artifacts
+.venv/
+venv/
+staticfiles/
+*.sqlite3
+music/views.py.bak_*

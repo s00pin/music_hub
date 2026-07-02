@@ -5,6 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
+from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .forms import AlbumForm, ArtistForm, SongForm
 from .models import Album, Artist, FavoriteSong, Song
@@ -101,6 +102,7 @@ def _song_platform_links(song, country_code=""):
     return unique_links
 
 
+@ensure_csrf_cookie
 def home(request):
     context = {
         "featured_songs": Song.objects.select_related("artist", "album").order_by("-release_date", "title")[:6],
@@ -113,6 +115,7 @@ def home(request):
     return render(request, "music/home.html", context)
 
 
+@ensure_csrf_cookie
 def songs(request):
     songs_qs = Song.objects.select_related("artist", "album").order_by("title")
     return render(
@@ -139,6 +142,7 @@ def albums(request):
     return render(request, "music/albums.html", {"albums": albums_qs, **_common_context()})
 
 
+@ensure_csrf_cookie
 def search_results(request):
     query = request.GET.get("q", "").strip()
     result_type = request.GET.get("type", "all")
@@ -246,6 +250,7 @@ def search_suggestions(request):
     return JsonResponse({"results": results[:10]})
 
 
+@ensure_csrf_cookie
 def artist_detail(request, pk):
     artist = get_object_or_404(Artist, pk=pk)
     albums_qs = Album.objects.filter(artist=artist).order_by("-release_date", "title")
@@ -261,6 +266,7 @@ def artist_detail(request, pk):
     return render(request, "music/artist_detail.html", context)
 
 
+@ensure_csrf_cookie
 def album_detail(request, pk):
     album = get_object_or_404(Album.objects.select_related("artist"), pk=pk)
     songs_qs = Song.objects.filter(album=album).select_related("artist").order_by("title")
@@ -274,6 +280,7 @@ def album_detail(request, pk):
     return render(request, "music/album_detail.html", context)
 
 
+@ensure_csrf_cookie
 def song_detail(request, pk):
     song = get_object_or_404(Song.objects.select_related("artist", "album"), pk=pk)
     related_songs = (
@@ -294,6 +301,7 @@ def song_detail(request, pk):
     return render(request, "music/song_detail.html", context)
 
 
+@ensure_csrf_cookie
 def listen_links(request):
     songs_with_links = Song.objects.select_related("artist", "album").exclude(youtube_link="").order_by("title")
     context = {
@@ -324,6 +332,7 @@ def toggle_favorite_song(request, pk):
     return JsonResponse({"ok": True, "is_favorite": False})
 
 
+@ensure_csrf_cookie
 def favorite_songs(request):
     session_key = _ensure_session_key(request)
     songs_qs = (

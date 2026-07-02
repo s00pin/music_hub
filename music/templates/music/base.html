@@ -11,6 +11,7 @@
 </head>
 <body>
     <div class="nav-shell">
+        {% csrf_token %}
         <nav class="navbar navbar-expand-lg navbar-dark">
             <div class="container-fluid px-0">
                 <a class="navbar-brand" href="{% url 'home' %}"><span class="brand-icon">&#127925;</span> Music Hub</a>
