@@ -11,8 +11,8 @@ from .forms import AlbumForm, ArtistForm, SongForm
 from .models import Album, Artist, FavoriteSong, Song
 
 
-ARTIST_PLACEHOLDER = "/media/artists/test.jpg"
-ALBUM_PLACEHOLDER = "/media/albums/blankplaceholder.jpg"
+ARTIST_PLACEHOLDER = "/static/music/placeholders/artist-placeholder.svg"
+ALBUM_PLACEHOLDER = "/static/music/placeholders/album-placeholder.svg"
 
 
 def _common_context():

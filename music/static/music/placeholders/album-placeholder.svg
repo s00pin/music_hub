@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="900" viewBox="0 0 900 900">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1d203a"/>
+      <stop offset="100%" stop-color="#2b2f55"/>
+    </linearGradient>
+    <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+      <path d="M34 0H0V34" fill="none" stroke="#9ca8e9" stroke-opacity="0.18" stroke-width="1"/>
+    </pattern>
+  </defs>
+  <rect width="900" height="900" fill="url(#bg)"/>
+  <rect width="900" height="900" fill="url(#grid)"/>
+  <circle cx="450" cy="450" r="230" fill="#f5c65a"/>
+  <circle cx="450" cy="450" r="56" fill="#2b2f55"/>
+  <circle cx="450" cy="450" r="20" fill="#f5c65a"/>
+  <text x="450" y="790" text-anchor="middle" font-family="Segoe UI, Arial, sans-serif" font-size="52" fill="#eef2ff" font-weight="700">
+    Album Cover
+  </text>
+</svg>

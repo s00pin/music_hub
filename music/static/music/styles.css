@@ -1,48 +1,48 @@
 @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap");
 
 :root {
-    --bg: #f4f3ef;
-    --panel: #fffdf8;
-    --panel-soft: #f7f1e6;
-    --ink: #1a1d2b;
-    --muted: #5f647a;
-    --line: #e4dbc9;
-    --accent: #ff7a3e;
-    --accent-strong: #ec5c18;
-    --accent-soft: #ffe5d7;
-    --secondary: #0f8b8d;
-    --secondary-soft: #dbf5f6;
-    --tag-text: #8e2f00;
-    --danger-soft: #fee3e4;
-    --danger-text: #c81d43;
-    --nav-bg: rgba(22, 17, 15, 0.86);
-    --nav-text: #fff4eb;
-    --nav-link: #f3cfb8;
+    --bg: #f2f6ff;
+    --panel: #ffffff;
+    --panel-soft: #edf3ff;
+    --ink: #141b2f;
+    --muted: #4d5f86;
+    --line: #d2ddf4;
+    --accent: #0d9488;
+    --accent-strong: #0b766d;
+    --accent-soft: #d9fbf5;
+    --secondary: #ffb703;
+    --secondary-soft: #fff0c3;
+    --tag-text: #09413c;
+    --danger-soft: #ffe4ea;
+    --danger-text: #d72662;
+    --nav-bg: rgba(12, 20, 43, 0.88);
+    --nav-text: #f5f8ff;
+    --nav-link: #bac8ec;
     --nav-link-active: #ffffff;
-    --nav-input-bg: rgba(255, 244, 235, 0.08);
-    --nav-input-border: rgba(255, 206, 176, 0.4);
-    --nav-input-placeholder: #f1c9ad;
-    --suggest-bg: #fffdf8;
-    --body-grad-1: #ffd9bf;
-    --body-grad-2: #c8ece6;
-    --shadow: 0 18px 40px rgba(48, 33, 12, 0.12);
+    --nav-input-bg: rgba(244, 250, 255, 0.08);
+    --nav-input-border: rgba(170, 196, 243, 0.42);
+    --nav-input-placeholder: #a6bbec;
+    --suggest-bg: #ffffff;
+    --body-grad-1: #d5f4ef;
+    --body-grad-2: #e1dfff;
+    --shadow: 0 18px 40px rgba(22, 35, 70, 0.12);
 }
 
 html[data-theme="dark"] {
-    --bg: #121520;
-    --panel: #1b2232;
-    --panel-soft: #222a3b;
-    --ink: #ecf1ff;
-    --muted: #a9b5d1;
-    --line: #2f3a52;
-    --accent: #ff9e61;
-    --accent-strong: #ff7b31;
-    --accent-soft: #432d1f;
-    --secondary: #4dd2cf;
-    --secondary-soft: #213c46;
-    --tag-text: #ffb992;
-    --danger-soft: #3b1f2a;
-    --danger-text: #ff9ab2;
+    --bg: #0e1425;
+    --panel: #172039;
+    --panel-soft: #222d49;
+    --ink: #ecf2ff;
+    --muted: #9fb0d8;
+    --line: #314267;
+    --accent: #35d4c6;
+    --accent-strong: #1db6a8;
+    --accent-soft: #1f4246;
+    --secondary: #ffd166;
+    --secondary-soft: #46381f;
+    --tag-text: #aef4ec;
+    --danger-soft: #402334;
+    --danger-text: #ff9dbd;
     --nav-bg: rgba(10, 13, 21, 0.92);
     --nav-text: #eff3ff;
     --nav-link: #b4bfd8;
@@ -51,8 +51,8 @@ html[data-theme="dark"] {
     --nav-input-border: rgba(121, 139, 173, 0.44);
     --nav-input-placeholder: #a4b2d4;
     --suggest-bg: #1c2434;
-    --body-grad-1: #402b1e;
-    --body-grad-2: #1e3740;
+    --body-grad-1: #1b3848;
+    --body-grad-2: #262042;
     --shadow: 0 18px 40px rgba(2, 6, 18, 0.45);
 }
 
@@ -67,7 +67,8 @@ body {
     background:
         radial-gradient(circle at 10% 0%, var(--body-grad-1) 0%, transparent 34%),
         radial-gradient(circle at 96% 10%, var(--body-grad-2) 0%, transparent 30%),
-        linear-gradient(160deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0)),
+        repeating-linear-gradient(45deg, rgba(18, 40, 86, 0.035) 0 1px, transparent 1px 22px),
+        repeating-linear-gradient(-45deg, rgba(13, 148, 136, 0.028) 0 1px, transparent 1px 24px),
         var(--bg);
 }
 
@@ -207,8 +208,8 @@ a {
     position: relative;
     overflow: hidden;
     padding: 2.4rem;
-    background: linear-gradient(128deg, #1f1629 0%, #47252f 54%, #20514e 100%);
-    color: #fff5ec;
+    background: linear-gradient(128deg, #10213f 0%, #1e3a71 48%, #0f6678 100%);
+    color: #f4f9ff;
 }
 
 .hero::before,
@@ -222,7 +223,7 @@ a {
 .hero::before {
     width: 320px;
     height: 320px;
-    background: rgba(255, 150, 78, 0.2);
+    background: rgba(255, 209, 102, 0.26);
     right: -110px;
     top: -120px;
 }
@@ -230,7 +231,7 @@ a {
 .hero::after {
     width: 230px;
     height: 230px;
-    background: rgba(79, 245, 227, 0.18);
+    background: rgba(53, 212, 198, 0.22);
     left: -70px;
     bottom: -90px;
 }
@@ -248,7 +249,7 @@ a {
 
 .hero p {
     max-width: 620px;
-    color: rgba(255, 238, 225, 0.88);
+    color: rgba(239, 247, 255, 0.9);
 }
 
 .hero-form .form-control,
@@ -288,7 +289,7 @@ a {
 }
 
 .btn-soft:hover {
-    border-color: var(--secondary);
+    border-color: var(--accent);
     background: var(--secondary-soft);
 }
 
@@ -299,7 +300,7 @@ a {
 
 .btn-outline-secondary:hover {
     color: var(--ink);
-    border-color: var(--secondary);
+    border-color: var(--accent);
     background: var(--secondary-soft);
 }
 
@@ -372,8 +373,8 @@ a {
 
 .entity-card:hover {
     transform: translateY(-4px);
-    border-color: rgba(255, 122, 62, 0.5);
-    box-shadow: 0 16px 28px rgba(59, 41, 18, 0.15);
+    border-color: rgba(13, 148, 136, 0.44);
+    box-shadow: 0 16px 28px rgba(20, 38, 88, 0.16);
 }
 
 @keyframes cardIn {
@@ -388,12 +389,13 @@ a {
 }
 
 .entity-art {
+    display: block;
     width: 100%;
     aspect-ratio: 1 / 1;
     object-fit: cover;
     border-radius: 14px;
-    background: linear-gradient(130deg, #e8dcc4, #d0c0a2);
-    box-shadow: inset 0 0 0 1px rgba(60, 35, 16, 0.08);
+    background: linear-gradient(130deg, #dbe7ff, #c8f1eb);
+    box-shadow: inset 0 0 0 1px rgba(17, 42, 89, 0.12);
 }
 
 .entity-art.is-fallback {
