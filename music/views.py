@@ -9,6 +9,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 from .forms import AlbumForm, ArtistForm, SongForm
 from .models import Album, Artist, FavoriteSong, Song
+from .services import import_musicbrainz_releases
 
 
 ARTIST_PLACEHOLDER = "/static/music/placeholders/artist-placeholder.svg"
@@ -28,6 +29,50 @@ def _search_filter_context():
         "search_albums": Album.objects.select_related("artist").order_by("title"),
         "search_genres": Song.objects.exclude(genre="").values_list("genre", flat=True).distinct().order_by("genre"),
     }
+
+
+def _build_search_querysets(query, result_type, selected_genre, selected_artist, selected_album):
+    artists_qs = Artist.objects.all()
+    albums_qs = Album.objects.select_related("artist").all()
+    songs_qs = Song.objects.select_related("artist", "album").all()
+
+    if query:
+        artists_qs = artists_qs.filter(name__icontains=query)
+        albums_qs = albums_qs.filter(Q(title__icontains=query) | Q(artist__name__icontains=query))
+        songs_qs = songs_qs.filter(
+            Q(title__icontains=query)
+            | Q(artist__name__icontains=query)
+            | Q(album__title__icontains=query)
+            | Q(genre__icontains=query)
+        )
+
+    if selected_artist:
+        artists_qs = artists_qs.filter(pk=selected_artist)
+        albums_qs = albums_qs.filter(artist_id=selected_artist)
+        songs_qs = songs_qs.filter(artist_id=selected_artist)
+
+    if selected_album:
+        albums_qs = albums_qs.filter(pk=selected_album)
+        songs_qs = songs_qs.filter(album_id=selected_album)
+
+    if selected_genre:
+        songs_qs = songs_qs.filter(genre__iexact=selected_genre)
+
+    artists_qs = artists_qs.order_by("name")
+    albums_qs = albums_qs.order_by("title")
+    songs_qs = songs_qs.order_by("title")
+
+    if result_type == "artist":
+        albums_qs = Album.objects.none()
+        songs_qs = Song.objects.none()
+    elif result_type == "album":
+        artists_qs = Artist.objects.none()
+        songs_qs = Song.objects.none()
+    elif result_type == "song":
+        artists_qs = Artist.objects.none()
+        albums_qs = Album.objects.none()
+
+    return artists_qs, albums_qs, songs_qs
 
 
 def _ensure_session_key(request):
@@ -150,45 +195,40 @@ def search_results(request):
     selected_artist = request.GET.get("artist", "").strip()
     selected_album = request.GET.get("album", "").strip()
 
-    artists_qs = Artist.objects.all()
-    albums_qs = Album.objects.select_related("artist").all()
-    songs_qs = Song.objects.select_related("artist", "album").all()
+    artists_qs, albums_qs, songs_qs = _build_search_querysets(
+        query=query,
+        result_type=result_type,
+        selected_genre=selected_genre,
+        selected_artist=selected_artist,
+        selected_album=selected_album,
+    )
 
-    if query:
-        artists_qs = artists_qs.filter(name__icontains=query)
-        albums_qs = albums_qs.filter(Q(title__icontains=query) | Q(artist__name__icontains=query))
-        songs_qs = songs_qs.filter(
-            Q(title__icontains=query)
-            | Q(artist__name__icontains=query)
-            | Q(album__title__icontains=query)
-            | Q(genre__icontains=query)
-        )
+    artist_count = artists_qs.count()
+    album_count = albums_qs.count()
+    song_count = songs_qs.count()
 
-    if selected_artist:
-        artists_qs = artists_qs.filter(pk=selected_artist)
-        albums_qs = albums_qs.filter(artist_id=selected_artist)
-        songs_qs = songs_qs.filter(artist_id=selected_artist)
+    external_lookup_summary = {
+        "attempted": False,
+        "artists_created": 0,
+        "albums_created": 0,
+        "songs_created": 0,
+        "created_total": 0,
+        "errors": [],
+    }
 
-    if selected_album:
-        albums_qs = albums_qs.filter(pk=selected_album)
-        songs_qs = songs_qs.filter(album_id=selected_album)
-
-    if selected_genre:
-        songs_qs = songs_qs.filter(genre__iexact=selected_genre)
-
-    artists_qs = artists_qs.order_by("name")
-    albums_qs = albums_qs.order_by("title")
-    songs_qs = songs_qs.order_by("title")
-
-    if result_type == "artist":
-        albums_qs = Album.objects.none()
-        songs_qs = Song.objects.none()
-    elif result_type == "album":
-        artists_qs = Artist.objects.none()
-        songs_qs = Song.objects.none()
-    elif result_type == "song":
-        artists_qs = Artist.objects.none()
-        albums_qs = Album.objects.none()
+    if query and artist_count == 0 and album_count == 0 and song_count == 0:
+        external_lookup_summary = import_musicbrainz_releases(query)
+        if external_lookup_summary.get("created_total"):
+            artists_qs, albums_qs, songs_qs = _build_search_querysets(
+                query=query,
+                result_type=result_type,
+                selected_genre=selected_genre,
+                selected_artist=selected_artist,
+                selected_album=selected_album,
+            )
+            artist_count = artists_qs.count()
+            album_count = albums_qs.count()
+            song_count = songs_qs.count()
 
     context = {
         "query": query,
@@ -200,9 +240,10 @@ def search_results(request):
         "albums": albums_qs,
         "songs": songs_qs,
         "favorite_song_ids": _favorite_song_ids(request),
-        "artist_count": artists_qs.count(),
-        "album_count": albums_qs.count(),
-        "song_count": songs_qs.count(),
+        "artist_count": artist_count,
+        "album_count": album_count,
+        "song_count": song_count,
+        "external_lookup_summary": external_lookup_summary,
         **_search_filter_context(),
         **_common_context(),
     }

@@ -6,6 +6,7 @@ from django.db import models
 class Artist(models.Model):
     name = models.CharField(max_length=200)
     image = models.ImageField(upload_to='artists/', blank=True, null=True)
+    mbid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
 
     def __str__(self):
         return self.name
@@ -13,6 +14,7 @@ class Artist(models.Model):
 #album model
 class Album(models.Model):
     title = models.CharField(max_length=200)
+    mbid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
     artist = models.ForeignKey(
         Artist,
         on_delete=models.CASCADE
@@ -35,6 +37,7 @@ class Album(models.Model):
 #Song model
 class Song(models.Model):
     title = models.CharField(max_length=200)
+    mbid = models.UUIDField(null=True, blank=True, unique=True, db_index=True)
 
     artist = models.ForeignKey(
         Artist,

@@ -5,6 +5,15 @@
     <div class="section-head">
         <h2>Search Results</h2>
         <p class="entity-sub mb-0">{{ artist_count }} artist{{ artist_count|pluralize }}, {{ album_count }} album{{ album_count|pluralize }}, {{ song_count }} song{{ song_count|pluralize }}</p>
+        {% if external_lookup_summary.attempted and external_lookup_summary.created_total %}
+            <p class="entity-sub mb-0 mt-2">
+                No local matches were found, so we imported {{ external_lookup_summary.created_total }} record{{ external_lookup_summary.created_total|pluralize }} from MusicBrainz.
+            </p>
+        {% elif external_lookup_summary.attempted and external_lookup_summary.errors %}
+            <p class="entity-sub mb-0 mt-2">
+                No local matches were found and the MusicBrainz import could not complete.
+            </p>
+        {% endif %}
     </div>
 
     <div class="results-layout">

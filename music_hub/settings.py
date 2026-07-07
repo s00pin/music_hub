@@ -123,3 +123,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+MUSICBRAINZ_USER_AGENT = os.getenv(
+    "MUSICBRAINZ_USER_AGENT",
+    "music-hub-metadata-cache/2026.07 (https://music.swop-nil.com; admin@music.swop-nil.com)",
+)
