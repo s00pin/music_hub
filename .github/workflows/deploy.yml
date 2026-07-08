@@ -30,18 +30,40 @@ jobs:
 
             cd "$APP_DIR"
 
-            echo "[1/4] Sync code"
+            DB_BACKUP="/tmp/music_hub_db.sqlite3"
+            MEDIA_BACKUP="/tmp/music_hub_media_backup"
+
+            echo "[1/5] Backup runtime data"
+            if [ -f "db.sqlite3" ]; then
+              cp -f "db.sqlite3" "$DB_BACKUP"
+            fi
+            rm -rf "$MEDIA_BACKUP"
+            mkdir -p "$MEDIA_BACKUP"
+            if [ -d "media" ]; then
+              cp -a media/. "$MEDIA_BACKUP"/
+            fi
+
+            echo "[2/5] Sync code"
             git fetch origin main
             git reset --hard origin/main
-            git clean -fd
+            git clean -fd -e db.sqlite3 -e media/ -e staticfiles/ -e venv/ -e .venv/
+
+            echo "[3/5] Restore runtime data"
+            if [ -f "$DB_BACKUP" ]; then
+              cp -f "$DB_BACKUP" "db.sqlite3"
+            fi
+            if [ -d "$MEDIA_BACKUP" ]; then
+              mkdir -p media
+              cp -a "$MEDIA_BACKUP"/. media/
+            fi
 
             if [ -f "deploy.sh" ]; then
-              echo "[2/4] Run deploy.sh"
+              echo "[4/5] Run deploy.sh"
               bash ./deploy.sh
               exit 0
             fi
 
-            echo "[2/4] Activate virtualenv"
+            echo "[4/5] Activate virtualenv"
             if [ -f ".venv/bin/activate" ]; then
               . ".venv/bin/activate"
             elif [ -f "venv/bin/activate" ]; then
@@ -51,8 +73,7 @@ jobs:
               exit 1
             fi
 
-            echo "[3/4] Run migrations"
+            echo "[5/5] Run migrations and static collection"
             python manage.py migrate --noinput
 
-            echo "[4/4] Collect static"
             python manage.py collectstatic --noinput
