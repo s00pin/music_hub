@@ -34,7 +34,7 @@ jobs:
             DB_BACKUP="/tmp/music_hub_db.sqlite3"
             MEDIA_BACKUP="/tmp/music_hub_media_backup"
 
-            echo "[1/5] Backup runtime data"
+            echo "[1/6] Backup runtime data"
             if [ -f "db.sqlite3" ]; then
               cp -f "db.sqlite3" "$DB_BACKUP"
             fi
@@ -44,12 +44,12 @@ jobs:
               cp -a media/. "$MEDIA_BACKUP"/
             fi
 
-            echo "[2/5] Sync code"
+            echo "[2/6] Sync code"
             git fetch origin main
             git reset --hard origin/main
             git clean -fd -e db.sqlite3 -e media/ -e staticfiles/ -e venv/ -e .venv/
 
-            echo "[3/5] Restore runtime data"
+            echo "[3/6] Restore runtime data"
             if [ -f "$DB_BACKUP" ]; then
               cp -f "$DB_BACKUP" "db.sqlite3"
             fi
@@ -59,12 +59,12 @@ jobs:
             fi
 
             if [ -f "deploy.sh" ]; then
-              echo "[4/5] Run deploy.sh"
+              echo "[4/6] Run deploy.sh"
               bash ./deploy.sh
               exit 0
             fi
 
-            echo "[4/5] Activate virtualenv"
+            echo "[4/6] Activate virtualenv"
             if [ -f ".venv/bin/activate" ]; then
               . ".venv/bin/activate"
             elif [ -f "venv/bin/activate" ]; then
@@ -74,7 +74,20 @@ jobs:
               exit 1
             fi
 
-            echo "[5/5] Run migrations and static collection"
+            echo "[5/6] Run migrations and static collection"
             python manage.py migrate --noinput
 
             python manage.py collectstatic --noinput
+
+            echo "[6/6] Restart app services"
+            if systemctl list-unit-files | grep -q '^django\.service'; then
+              sudo systemctl restart django
+            elif systemctl list-unit-files | grep -q '^gunicorn\.service'; then
+              sudo systemctl restart gunicorn
+            else
+              echo "Neither django.service nor gunicorn.service found."
+              exit 1
+            fi
+
+            sudo systemctl restart nginx
+            sudo systemctl status --no-pager django nginx || sudo systemctl status --no-pager gunicorn nginx
