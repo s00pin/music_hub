@@ -231,11 +231,36 @@ def _upsert_artist(artist_uuid, artist_name):
     normalized_name = _truncate((artist_name or "Unknown Artist").strip() or "Unknown Artist", 200)
 
     if artist_uuid:
-        artist, created = _get_or_create_by_mbid(Artist, artist_uuid, {"name": normalized_name})
-        if not created and artist.name != normalized_name and artist.name in {"", "Unknown Artist"}:
-            artist.name = normalized_name
-            artist.save(update_fields=["name"])
-        return artist, created
+        artist = Artist.objects.filter(mbid=artist_uuid).first()
+        if artist:
+            changed_fields = []
+            if artist.name != normalized_name and artist.name in {"", "Unknown Artist"}:
+                artist.name = normalized_name
+                changed_fields.append("name")
+            if changed_fields:
+                artist.save(update_fields=changed_fields)
+            return artist, False
+
+        # Merge into an existing local artist without MBID instead of creating duplicates.
+        existing_by_name = Artist.objects.filter(name__iexact=normalized_name).first()
+        if existing_by_name:
+            changed_fields = []
+            if not existing_by_name.mbid:
+                existing_by_name.mbid = artist_uuid
+                changed_fields.append("mbid")
+            if existing_by_name.name != normalized_name and existing_by_name.name in {"", "Unknown Artist"}:
+                existing_by_name.name = normalized_name
+                changed_fields.append("name")
+            if changed_fields:
+                try:
+                    existing_by_name.save(update_fields=changed_fields)
+                except IntegrityError:
+                    linked = Artist.objects.filter(mbid=artist_uuid).first()
+                    if linked:
+                        return linked, False
+            return existing_by_name, False
+
+        return Artist.objects.create(name=normalized_name, mbid=artist_uuid), True
 
     existing = Artist.objects.filter(name__iexact=normalized_name).first()
     if existing:
@@ -245,15 +270,34 @@ def _upsert_artist(artist_uuid, artist_name):
 
 
 def _upsert_album(release_uuid, artist, title, release_date):
-    defaults = {
-        "title": title,
-        "artist": artist,
-        "release_date": release_date,
-        "cover_url": "",
-    }
+    album = Album.objects.filter(mbid=release_uuid).first()
+    if not album:
+        # Merge into an existing local album with same title/artist to avoid duplicates.
+        album = Album.objects.filter(artist=artist, title__iexact=title).first()
+        if album:
+            changed_fields = []
+            if not album.mbid:
+                album.mbid = release_uuid
+                changed_fields.append("mbid")
+            if release_date and album.release_date != release_date:
+                album.release_date = release_date
+                changed_fields.append("release_date")
+            if changed_fields:
+                try:
+                    album.save(update_fields=changed_fields)
+                except IntegrityError:
+                    linked = Album.objects.filter(mbid=release_uuid).first()
+                    if linked:
+                        album = linked
+            return album, False
 
-    album, created = _get_or_create_by_mbid(Album, release_uuid, defaults)
-    if created:
+        album = Album.objects.create(
+            mbid=release_uuid,
+            title=title,
+            artist=artist,
+            release_date=release_date,
+            cover_url="",
+        )
         return album, True
 
     changed_fields = []
@@ -295,12 +339,19 @@ def _upsert_song(track, default_artist, album, release_date, fallback_genre):
         "release_date": release_date,
     }
 
-    if song_uuid:
-        song, created = _get_or_create_by_mbid(Song, song_uuid, defaults)
-        if created:
-            return song, True
+    song = Song.objects.filter(mbid=song_uuid).first() if song_uuid else None
+    if not song:
+        song = Song.objects.filter(
+            title__iexact=track_title,
+            artist=song_artist,
+            album=album,
+        ).first()
 
+    if song:
         changed_fields = []
+        if song_uuid and not song.mbid:
+            song.mbid = song_uuid
+            changed_fields.append("mbid")
         if song.title != track_title:
             song.title = track_title
             changed_fields.append("title")
@@ -318,7 +369,13 @@ def _upsert_song(track, default_artist, album, release_date, fallback_genre):
             changed_fields.append("release_date")
 
         if changed_fields:
-            song.save(update_fields=changed_fields)
+            try:
+                song.save(update_fields=changed_fields)
+            except IntegrityError:
+                if song_uuid:
+                    linked = Song.objects.filter(mbid=song_uuid).first()
+                    if linked:
+                        return linked, False
         return song, False
 
     existing = Song.objects.filter(
@@ -329,22 +386,9 @@ def _upsert_song(track, default_artist, album, release_date, fallback_genre):
     if existing:
         return existing, False
 
+    if song_uuid:
+        defaults["mbid"] = song_uuid
     return Song.objects.create(**defaults), True
-
-
-def _get_or_create_by_mbid(model, mbid, defaults):
-    for _ in range(3):
-        try:
-            with transaction.atomic():
-                return model.objects.get_or_create(mbid=mbid, defaults=defaults)
-        except IntegrityError:
-            existing = model.objects.filter(mbid=mbid).first()
-            if existing:
-                return existing, False
-            time.sleep(0.05)
-
-    return model.objects.get_or_create(mbid=mbid, defaults=defaults)
-
 
 def _extract_release_artist(release):
     for entry in release.get("artist-credit") or []:

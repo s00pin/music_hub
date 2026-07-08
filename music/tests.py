@@ -49,7 +49,7 @@ class SearchFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         mocked_import.assert_not_called()
-        self.assertNotContains(response, "Try MusicBrainz import")
+        self.assertNotContains(response, "Run MusicBrainz import")
 
     def test_search_shows_import_action_for_admin_when_empty(self):
         self.client.login(username="admin-search", password="pass12345")
@@ -58,7 +58,7 @@ class SearchFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         mocked_import.assert_not_called()
-        self.assertContains(response, "Try MusicBrainz import")
+        self.assertContains(response, "Run MusicBrainz import")
 
     def test_search_import_does_not_run_for_non_admin(self):
         self.client.login(username="member-search", password="pass12345")
@@ -100,6 +100,19 @@ class SearchFlowTests(TestCase):
         self.assertContains(response, "Imported Artist")
         self.assertContains(response, "Imported Album")
         self.assertContains(response, "Imported Track")
+        mocked_import.assert_called_once()
+
+    def test_search_import_runs_when_requested_even_with_local_results(self):
+        artist = Artist.objects.create(name="Local Artist")
+        album = Album.objects.create(title="Local Album", artist=artist)
+        Song.objects.create(title="Local Song", artist=artist, album=album, genre="Rock")
+
+        self.client.login(username="admin-search", password="pass12345")
+        with patch("music.views.import_musicbrainz_releases") as mocked_import:
+            response = self.client.get(reverse("search-results"), {"q": "Local", "import": "1"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Local Artist")
         mocked_import.assert_called_once()
 
 

@@ -612,13 +612,16 @@ def search_results(request):
     }
 
     allow_auto_import = bool(getattr(settings, "MUSICBRAINZ_AUTO_IMPORT_ON_EMPTY", False))
-    should_try_import = (
-        can_manage_catalog
-        and query
+    should_auto_import_on_empty = (
+        allow_auto_import
         and artist_count == 0
         and album_count == 0
         and song_count == 0
-        and (import_requested or allow_auto_import)
+    )
+    should_try_import = (
+        can_manage_catalog
+        and query
+        and (import_requested or should_auto_import_on_empty)
     )
 
     if should_try_import:
@@ -667,9 +670,6 @@ def search_results(request):
         "show_import_action": bool(
             can_manage_catalog
             and query
-            and artist_count == 0
-            and album_count == 0
-            and song_count == 0
             and not external_lookup_summary["attempted"]
         ),
         "external_lookup_summary": external_lookup_summary,

@@ -61,7 +61,7 @@
             <div>
                 {% if external_lookup_summary.attempted and external_lookup_summary.created_total %}
                     <div class="alert">
-                        Imported {{ external_lookup_summary.created_total }} new record{{ external_lookup_summary.created_total|pluralize }} from MusicBrainz and re-ran the local search.
+                        Imported or refreshed {{ external_lookup_summary.created_total }} record{{ external_lookup_summary.created_total|pluralize }} from MusicBrainz and re-ran the local search.
                     </div>
                 {% elif external_lookup_summary.attempted and external_lookup_summary.errors %}
                     <div class="alert">
@@ -69,8 +69,8 @@
                     </div>
                 {% elif show_import_action %}
                     <div class="alert">
-                        No local results found.
-                        <a class="btn btn-ghost" href="{% url 'search-results' %}?q={{ query|urlencode }}&type={{ result_type }}&genre={{ selected_genre|urlencode }}&import=1">Try MusicBrainz import</a>
+                        Refresh local metadata from MusicBrainz for this query.
+                        <a class="btn btn-ghost" href="{% url 'search-results' %}?q={{ query|urlencode }}&type={{ result_type }}&genre={{ selected_genre|urlencode }}&import=1">Run MusicBrainz import</a>
                     </div>
                 {% endif %}
             </div>
