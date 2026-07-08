@@ -16,5 +16,43 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           port: 22
           script: |
-            cd /var/www/projects/django
-            ./deploy.sh
+            set -e
+
+            BASE_DIR="/var/www/projects/django"
+            if [ -d "$BASE_DIR/.git" ] && [ -f "$BASE_DIR/manage.py" ]; then
+              APP_DIR="$BASE_DIR"
+            elif [ -d "$BASE_DIR/music_hub/.git" ] && [ -f "$BASE_DIR/music_hub/manage.py" ]; then
+              APP_DIR="$BASE_DIR/music_hub"
+            else
+              echo "Could not find a Django git repo under $BASE_DIR"
+              exit 1
+            fi
+
+            cd "$APP_DIR"
+
+            echo "[1/4] Sync code"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fd
+
+            if [ -f "deploy.sh" ]; then
+              echo "[2/4] Run deploy.sh"
+              bash ./deploy.sh
+              exit 0
+            fi
+
+            echo "[2/4] Activate virtualenv"
+            if [ -f ".venv/bin/activate" ]; then
+              . ".venv/bin/activate"
+            elif [ -f "venv/bin/activate" ]; then
+              . "venv/bin/activate"
+            else
+              echo "Virtualenv not found (.venv or venv)."
+              exit 1
+            fi
+
+            echo "[3/4] Run migrations"
+            python manage.py migrate --noinput
+
+            echo "[4/4] Collect static"
+            python manage.py collectstatic --noinput
