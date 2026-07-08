@@ -1,33 +1,55 @@
 {% extends 'music/base.html' %}
 
+{% block title %}Artists | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
 {% block content %}
-<section class="panel p-4">
-    <div class="section-head">
-        <h2>All Artists</h2>
-        <a href="{% url 'add-artist' %}" class="btn btn-accent btn-sm">Add Artist</a>
-    </div>
-
-    <div class="card-grid">
-        {% for artist in artists %}
-            <div class="entity-card">
-                <a href="{% url 'artist-detail' artist.id %}">
-                    {% if artist.image %}
-                        <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ artist_placeholder }}">
-                    {% else %}
-                        <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                    {% endif %}
-                    <p class="entity-title">{{ artist.name }}</p>
-                </a>
-                <p class="entity-sub mb-1">{{ artist.album_count }} album{{ artist.album_count|pluralize }} &middot; {{ artist.song_count }} song{{ artist.song_count|pluralize }}</p>
-
-                <div class="d-flex gap-2 mt-3">
-                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-artist' artist.id %}">Edit</a>
-                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-artist' artist.id %}">Delete</a>
-                </div>
+<div class="page-stack home-stack">
+    <section class="home-section section artists-page">
+        <div class="section-head">
+            <div>
+                <h1 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m8 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6M2 20a5.5 5.5 0 0 1 11 0v1H2zm11 1v-1a4.5 4.5 0 0 1 8 0v1z"></path></svg>
+                    Artists
+                </h1>
+                <p class="page-note">Discover artists, their catalogs, and profile-level stats.</p>
             </div>
-        {% empty %}
-            <div class="entity-card"><p class="entity-sub mb-0">No artists added yet.</p></div>
-        {% endfor %}
-    </div>
-</section>
+            {% if request.user.is_staff %}
+                <a href="{% url 'add-artist' %}" class="btn btn-accent">Add artist</a>
+            {% endif %}
+        </div>
+
+        <div class="list-controls">
+            {% include 'music/partials/per_page_control.html' with preserved_params=artists_per_page_params per_page=per_page per_page_options=per_page_options control_id='artists-per-page' %}
+        </div>
+
+        <div class="home-artist-grid">
+            {% for card in artist_cards %}
+                <article class="home-catalog-card home-artist-card">
+                    <a href="{% url 'artist-detail' card.artist.id %}">
+                        <img src="{{ card.artist.image_src|default:artist_placeholder }}" alt="{{ card.artist.name }}" class="home-catalog-cover home-artist-cover" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                    </a>
+                    <div class="home-catalog-body">
+                        <a href="{% url 'artist-detail' card.artist.id %}" class="home-catalog-title">{{ card.artist.name }}</a>
+                        <p class="home-catalog-subtitle">{{ card.artist.album_count }} album{{ card.artist.album_count|pluralize }} &middot; {{ card.artist.song_count }} song{{ card.artist.song_count|pluralize }}</p>
+                        <div class="home-catalog-actions">
+                            {% if request.user.is_authenticated and card.representative_song_id %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if card.representative_song_id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-favorite="{% if card.representative_song_id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if card.representative_song_id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if card.representative_song_id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-liked="{% if card.representative_song_id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty-state">No artists found.</div>
+            {% endfor %}
+        </div>
+
+        {% include 'music/partials/pagination.html' with page_obj=artists_page page_param='page' pagination_query_prefix=artists_pagination_query pagination_params=artists_pagination_params %}
+    </section>
+</div>
 {% endblock %}

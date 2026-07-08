@@ -1,0 +1,34 @@
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+<nav class="pager" aria-label="Pagination">
+    {% if page_obj.has_previous %}
+        <a class="pager-link" href="?{{ pagination_query_prefix }}{{ page_param }}={{ page_obj.previous_page_number }}">Previous</a>
+    {% else %}
+        <span class="pager-link is-disabled">Previous</span>
+    {% endif %}
+
+    <span class="pager-status">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+    <form method="get" class="pager-jump-form">
+        {% for name, value in pagination_params %}
+            <input type="hidden" name="{{ name }}" value="{{ value }}">
+        {% endfor %}
+        <label for="{{ page_param }}-jump" class="visually-hidden">Go to page</label>
+        <input
+            id="{{ page_param }}-jump"
+            class="pager-jump-input"
+            type="number"
+            name="{{ page_param }}"
+            min="1"
+            max="{{ page_obj.paginator.num_pages }}"
+            value="{{ page_obj.number }}"
+        >
+        <button class="pager-link" type="submit">Go</button>
+    </form>
+
+    {% if page_obj.has_next %}
+        <a class="pager-link" href="?{{ pagination_query_prefix }}{{ page_param }}={{ page_obj.next_page_number }}">Next</a>
+    {% else %}
+        <span class="pager-link is-disabled">Next</span>
+    {% endif %}
+</nav>
+{% endif %}

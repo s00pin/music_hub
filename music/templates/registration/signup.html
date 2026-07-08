@@ -1,0 +1,100 @@
+{% extends 'music/base.html' %}
+
+{% block title %}Sign Up | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
+{% block content %}
+<div class="page-stack home-stack">
+    <section class="home-section section auth-shell">
+        <article class="panel auth-panel">
+            <header class="auth-header">
+                <p class="home-kicker">Create account</p>
+                <h1 class="hero-title auth-title">Join Music Hub</h1>
+                <p class="auth-copy">Create your account to save favorites, build playlists, and personalize your archive.</p>
+            </header>
+
+            <section class="auth-requirements" aria-label="Password requirements">
+                <h2 class="auth-demo-title">Password requirements</h2>
+                <ul class="auth-requirement-list">
+                    <li>Use at least 8 characters.</li>
+                    <li>Avoid common passwords and personal information.</li>
+                    <li>Use a mix of letters, numbers, and symbols for stronger security.</li>
+                </ul>
+            </section>
+
+            <form method="post" class="form-grid auth-form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}<div class="auth-help">{{ field.help_text|safe }}</div>{% endif %}
+                        {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+                    </div>
+                {% endfor %}
+
+                <div class="auth-strength" id="password-strength">
+                    <div class="auth-strength-bar"><span id="password-strength-bar"></span></div>
+                    <p class="auth-strength-text" id="password-strength-text">Create a password to see strength.</p>
+                </div>
+
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                <div class="toolbar auth-form-actions">
+                    <button class="btn btn-accent" type="submit">Create account</button>
+                    <a class="btn btn-ghost" href="{% url 'login' %}">Login</a>
+                </div>
+            </form>
+        </article>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+(() => {
+    const passwordInput = document.getElementById("id_password1");
+    const strengthBar = document.getElementById("password-strength-bar");
+    const strengthText = document.getElementById("password-strength-text");
+
+    if (!passwordInput || !strengthBar || !strengthText) {
+        return;
+    }
+
+    const evaluate = (value) => {
+        let score = 0;
+        if (value.length >= 8) score += 1;
+        if (/[A-Z]/.test(value) && /[a-z]/.test(value)) score += 1;
+        if (/\d/.test(value)) score += 1;
+        if (/[^A-Za-z0-9]/.test(value)) score += 1;
+        return score;
+    };
+
+    const labels = [
+        "Create a password to see strength.",
+        "Weak password",
+        "Fair password",
+        "Good password",
+        "Strong password",
+    ];
+
+    const colors = ["#475569", "#ef4444", "#f59e0b", "#22c55e", "#06b6d4"];
+
+    const render = () => {
+        const value = passwordInput.value || "";
+        const score = evaluate(value);
+        const width = Math.max(8, (score / 4) * 100);
+        strengthBar.style.width = `${width}%`;
+        strengthBar.style.background = colors[score];
+        strengthText.textContent = labels[score];
+    };
+
+    passwordInput.addEventListener("input", render);
+    render();
+})();
+</script>
+{% endblock %}

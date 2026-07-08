@@ -128,3 +128,10 @@ MUSICBRAINZ_USER_AGENT = os.getenv(
     "MUSICBRAINZ_USER_AGENT",
     "music-hub-metadata-cache/2026.07 (https://music.swop-nil.com; admin@music.swop-nil.com)",
 )
+
+MUSICBRAINZ_AUTO_IMPORT_ON_EMPTY = os.getenv("MUSICBRAINZ_AUTO_IMPORT_ON_EMPTY", "False").lower() in {"1", "true", "yes", "on"}
+MUSICBRAINZ_IMPORT_LIMIT = int(os.getenv("MUSICBRAINZ_IMPORT_LIMIT", "2"))
+
+LOGIN_URL = "/accounts/login/"
+LOGIN_REDIRECT_URL = "/"
+LOGOUT_REDIRECT_URL = "/"

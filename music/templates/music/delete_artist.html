@@ -1,14 +1,19 @@
 {% extends 'music/base.html' %}
 
+{% block title %}Delete Artist | Music Hub{% endblock %}
+
 {% block content %}
 <section class="panel form-card">
-    <h2 class="mb-2">Delete Artist</h2>
+    <h1 class="section-title title-with-icon">
+        <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m8 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6M2 20a5.5 5.5 0 0 1 11 0v1H2zm11 1v-1a4.5 4.5 0 0 1 8 0v1z"></path></svg>
+        Delete artist
+    </h1>
     <p class="entity-sub">Delete <strong>{{ artist.name }}</strong>? This cannot be undone.</p>
 
-    <form method="post" class="d-flex gap-2 mt-3">
+    <form method="post" class="toolbar">
         {% csrf_token %}
         <button class="btn btn-danger" type="submit">Delete</button>
-        <a href="{% url cancel_url %}" class="btn btn-soft">Cancel</a>
+        <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
     </form>
 </section>
 {% endblock %}

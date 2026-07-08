@@ -22,10 +22,11 @@ LOGGER = logging.getLogger(__name__)
 
 MUSICBRAINZ_RELEASE_SEARCH_URL = "https://musicbrainz.org/ws/2/release/"
 MUSICBRAINZ_RELEASE_LOOKUP_URL = "https://musicbrainz.org/ws/2/release/{mbid}"
+MUSICBRAINZ_RELEASE_GROUP_LOOKUP_URL = "https://musicbrainz.org/ws/2/release-group/{mbid}"
 COVER_ART_ARCHIVE_RELEASE_URL = "https://coverartarchive.org/release/{mbid}"
 MUSICBRAINZ_DELAY_SECONDS = 1.1
 MUSICBRAINZ_TIMEOUT_SECONDS = 15
-MUSICBRAINZ_RESULT_LIMIT = 5
+MUSICBRAINZ_RESULT_LIMIT = 2
 DEFAULT_MUSICBRAINZ_USER_AGENT = (
     "music-hub-metadata-cache/2026.07 "
     "(https://music.swop-nil.com; admin@music.swop-nil.com)"
@@ -74,6 +75,34 @@ def import_musicbrainz_releases(query, limit=MUSICBRAINZ_RESULT_LIMIT):
     return summary
 
 
+def import_musicbrainz_release_payloads(releases):
+    summary = {
+        "attempted": True,
+        "artists_created": 0,
+        "albums_created": 0,
+        "songs_created": 0,
+        "created_total": 0,
+        "errors": [],
+    }
+
+    for release in releases or []:
+        try:
+            created = _upsert_release(release)
+        except Exception as exc:
+            LOGGER.exception("MusicBrainz release payload import failed")
+            summary["errors"].append(str(exc))
+            continue
+
+        summary["artists_created"] += created["artists"]
+        summary["albums_created"] += created["albums"]
+        summary["songs_created"] += created["songs"]
+
+    summary["created_total"] = (
+        summary["artists_created"] + summary["albums_created"] + summary["songs_created"]
+    )
+    return summary
+
+
 def _musicbrainz_release_search(query, limit):
     params = urlencode(
         {
@@ -87,8 +116,14 @@ def _musicbrainz_release_search(query, limit):
 
 
 def _musicbrainz_release_lookup(release_mbid):
-    params = urlencode({"fmt": "json", "inc": "artist-credits+recordings+tags"})
+    params = urlencode({"fmt": "json", "inc": "artist-credits+recordings+tags+genres+release-groups"})
     url = f"{MUSICBRAINZ_RELEASE_LOOKUP_URL.format(mbid=release_mbid)}?{params}"
+    return _request_json(url, throttle_musicbrainz=True)
+
+
+def _musicbrainz_release_group_lookup(release_group_mbid):
+    params = urlencode({"fmt": "json", "inc": "tags+genres"})
+    url = f"{MUSICBRAINZ_RELEASE_GROUP_LOOKUP_URL.format(mbid=release_group_mbid)}?{params}"
     return _request_json(url, throttle_musicbrainz=True)
 
 
@@ -146,8 +181,13 @@ def _upsert_release(release):
     release_details = _musicbrainz_release_lookup(release_uuid)
     release_tracks = _extract_tracks(release_details)
     release_genre = _pick_genre(release_details)
-    if release_genre == "Unknown":
+    if _is_unknown_genre(release_genre):
         release_genre = _pick_genre(release)
+    if _is_unknown_genre(release_genre):
+        release_group_uuid = _extract_release_group_uuid(release_details or release)
+        if release_group_uuid:
+            release_group_details = _musicbrainz_release_group_lookup(release_group_uuid)
+            release_genre = _pick_genre(release_group_details)
 
     created_counts = {"artists": 0, "albums": 0, "songs": 0}
 
@@ -176,10 +216,13 @@ def _upsert_release(release):
             if created_song:
                 created_counts["songs"] += 1
 
-    if not album.cover:
-        cover_url = _extract_cover_url(_cover_art_lookup(release_uuid))
-        if cover_url:
-            _save_album_cover(album, cover_url)
+    cover_url = _extract_cover_url(_cover_art_lookup(release_uuid))
+    if cover_url and album.cover_url != cover_url:
+        album.cover_url = cover_url
+        album.save(update_fields=["cover_url"])
+
+    if cover_url and not album.cover:
+        _save_album_cover(album, cover_url)
 
     return created_counts
 
@@ -206,6 +249,7 @@ def _upsert_album(release_uuid, artist, title, release_date):
         "title": title,
         "artist": artist,
         "release_date": release_date,
+        "cover_url": "",
     }
 
     album, created = _get_or_create_by_mbid(Album, release_uuid, defaults)
@@ -235,7 +279,13 @@ def _upsert_song(track, default_artist, album, release_date, fallback_genre):
     recording_uuid = _to_uuid((track.get("recording") or {}).get("id"))
     song_uuid = track_uuid or recording_uuid
     song_artist = _resolve_track_artist(track, default_artist)
-    genre = _truncate((fallback_genre or "Unknown").strip() or "Unknown", 100)
+    track_genre = _pick_genre(track.get("recording") or {})
+    genre_candidate = track_genre if not _is_unknown_genre(track_genre) else fallback_genre
+    if _is_unknown_genre(genre_candidate):
+        artist_fallback_genre = _existing_artist_genre(song_artist)
+        if artist_fallback_genre:
+            genre_candidate = artist_fallback_genre
+    genre = _truncate((genre_candidate or "Unknown").strip() or "Unknown", 100)
 
     defaults = {
         "title": track_title,
@@ -332,13 +382,50 @@ def _pick_genre(payload):
     if not payload:
         return "Unknown"
 
+    genres = payload.get("genres") or []
+    if genres:
+        sorted_genres = sorted(genres, key=lambda item: item.get("count", 0), reverse=True)
+        top_genre = (sorted_genres[0].get("name") or "").strip()
+        if top_genre:
+            return _truncate(top_genre, 100)
+
     tags = payload.get("tags") or []
     if not tags:
         return "Unknown"
-
     sorted_tags = sorted(tags, key=lambda item: item.get("count", 0), reverse=True)
     top_name = (sorted_tags[0].get("name") or "").strip()
     return _truncate(top_name or "Unknown", 100)
+
+
+def _extract_release_group_uuid(payload):
+    if not payload:
+        return None
+
+    release_group = payload.get("release-group") or {}
+    return _to_uuid(release_group.get("id"))
+
+
+def _existing_artist_genre(artist):
+    if not artist:
+        return ""
+
+    known_genres = (
+        Song.objects.filter(artist=artist)
+        .exclude(genre__isnull=True)
+        .exclude(genre__exact="")
+        .exclude(genre__iexact="unknown")
+        .exclude(genre__iexact="test")
+        .values_list("genre", flat=True)
+    )
+    for genre in known_genres:
+        cleaned = (genre or "").strip()
+        if cleaned:
+            return cleaned
+    return ""
+
+
+def _is_unknown_genre(value):
+    return (value or "").strip().casefold() in {"", "unknown", "test"}
 
 
 def _extract_cover_url(payload):

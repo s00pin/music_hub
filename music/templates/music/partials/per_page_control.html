@@ -1,0 +1,14 @@
+<form method="get" class="per-page-form">
+    {% for name, value in preserved_params %}
+        <input type="hidden" name="{{ name }}" value="{{ value }}">
+    {% endfor %}
+
+    <label for="{{ control_id }}">Show</label>
+    <select id="{{ control_id }}" name="per_page" onchange="this.form.submit()">
+        {% for size in per_page_options %}
+            <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
+        {% endfor %}
+    </select>
+    <span>items</span>
+    <noscript><button class="btn btn-ghost" type="submit">Apply</button></noscript>
+</form>

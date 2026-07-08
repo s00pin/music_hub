@@ -1,0 +1,56 @@
+{% extends 'music/base.html' %}
+
+{% block title %}Login | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
+{% block content %}
+<div class="page-stack home-stack">
+    <section class="home-section section auth-shell">
+        <article class="panel auth-panel">
+            <header class="auth-header">
+                <p class="home-kicker">Account access</p>
+                <h1 class="hero-title auth-title">Welcome back</h1>
+                <p class="auth-copy">Sign in to continue managing your favorites, likes, and personal playlists.</p>
+            </header>
+
+            <section class="auth-demo" aria-label="Demo credentials">
+                <h2 class="auth-demo-title">Demo credentials</h2>
+                <div class="auth-demo-grid">
+                    <div>
+                        <p class="auth-demo-label">Demo user</p>
+                        <p class="auth-demo-value"><code>demo</code> / <code>demo@123</code></p>
+                    </div>
+                    <div>
+                        <p class="auth-demo-label">Admin user</p>
+                        <p class="auth-demo-value"><code>admin</code> / <code>admin@123</code></p>
+                    </div>
+                </div>
+            </section>
+
+            <form method="post" class="form-grid auth-form">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="form-field">
+                        <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                        {{ field }}
+                        {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+                    </div>
+                {% endfor %}
+
+                {% if form.non_field_errors %}
+                    {% for error in form.non_field_errors %}
+                        <p class="form-error">{{ error }}</p>
+                    {% endfor %}
+                {% endif %}
+
+                <input type="hidden" name="next" value="{{ next }}">
+
+                <div class="toolbar auth-form-actions">
+                    <button class="btn btn-accent" type="submit">Login</button>
+                    <a class="btn btn-ghost" href="{% url 'signup' %}">Create account</a>
+                </div>
+            </form>
+        </article>
+    </section>
+</div>
+{% endblock %}

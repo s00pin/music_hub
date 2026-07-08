@@ -4,242 +4,627 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>&#127925; Music Hub</title>
+    <title>{% block title %}Music Hub{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="{% static 'music/favicon.svg' %}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'music/styles.css' %}">
 </head>
-<body>
-    <div class="nav-shell">
-        {% csrf_token %}
-        <nav class="navbar navbar-expand-lg navbar-dark">
-            <div class="container-fluid px-0">
-                <a class="navbar-brand" href="{% url 'home' %}"><span class="brand-icon">&#127925;</span> Music Hub</a>
+<body class="page-{{ request.resolver_match.url_name|default:'home' }}{% block body_class %}{% endblock %}">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="site-header">
+        <div class="site-wrap topbar">
+            <a class="brand" href="{% url 'dashboard' %}" aria-label="Music Hub dashboard">
+                <svg class="brand-logo" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                    <path d="M24 12v28.8a7.2 7.2 0 1 0 3 5.7V22.3l16-3v22.5a7.2 7.2 0 1 0 3 5.7V12z"></path>
+                    <rect x="10" y="42" width="4" height="12" rx="2"></rect>
+                    <rect x="16" y="36" width="4" height="18" rx="2"></rect>
+                </svg>
+                <span class="brand-copy">
+                    <span class="brand-text">Music Hub</span>
+                    <span class="brand-subtext">Local-first music archive</span>
+                </span>
+            </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-
-                <div class="collapse navbar-collapse" id="mainNav">
-                    <div class="nav-links navbar-nav ms-lg-3 me-lg-4 gap-lg-2">
-                        <a class="nav-link{% if request.resolver_match.url_name == 'songs' %} active{% endif %}" href="{% url 'songs' %}">Songs</a>
-                        <a class="nav-link{% if request.resolver_match.url_name == 'artists' %} active{% endif %}" href="{% url 'artists' %}">Artists</a>
-                        <a class="nav-link{% if request.resolver_match.url_name == 'albums' %} active{% endif %}" href="{% url 'albums' %}">Albums</a>
-                        <a class="nav-link{% if request.resolver_match.url_name == 'listen-links' %} active{% endif %}" href="{% url 'listen-links' %}">Listen</a>
-                        <a class="nav-link{% if request.resolver_match.url_name == 'favorites' %} active{% endif %}" href="{% url 'favorites' %}">Favorites</a>
-                    </div>
-
-                    <div class="d-flex ms-lg-auto mt-3 mt-lg-0 gap-2 align-items-center flex-wrap nav-actions">
-                        <form class="d-flex" action="{% url 'search-results' %}" method="get" autocomplete="off">
-                            <div class="search-wrap">
-                                <input
-                                    id="global-search"
-                                    class="search-input"
-                                    type="search"
-                                    name="q"
-                                    value="{{ request.GET.q|default:'' }}"
-                                    placeholder="Search artist, album, or song"
-                                    aria-label="Search"
-                                >
-                                <ul id="suggestions" class="suggestion-list"></ul>
-                            </div>
-                        </form>
-
-                        <select id="theme-mode" class="form-select theme-select" aria-label="Theme mode">
-                            <option value="light">Light</option>
-                            <option value="dark">Dark</option>
-                            <option value="system">System</option>
-                            <option value="time">Time</option>
-                        </select>
-                    </div>
-                </div>
+            <div class="header-tools">
+                {% if request.user.is_authenticated %}
+                    <a class="btn btn-auth-profile auth-nav-link" href="{% url 'library' %}">{{ request.user.username }}</a>
+                    <form method="post" action="{% url 'logout' %}" class="inline-form auth-nav-link">
+                        {% csrf_token %}
+                        <button class="btn btn-auth-logout" type="submit">Logout</button>
+                    </form>
+                {% else %}
+                    <a class="btn btn-auth-login auth-nav-link" href="{% url 'login' %}">Login</a>
+                {% endif %}
             </div>
-        </nav>
-    </div>
+        </div>
+    </header>
 
-    <main class="page-shell">
+    <main class="site-wrap main-shell" id="main-content">
         {% block content %}{% endblock %}
     </main>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
+    <footer class="site-footer">
+        <div class="site-wrap footer-shell">
+            <div>
+                <p class="footer-brand">Music Hub</p>
+                <p class="footer-copy">Archive your collection, discover metadata, and keep listening links in one place.</p>
+            </div>
+            <nav class="footer-links" aria-label="Footer links">
+                <a href="{% url 'home' %}">Home</a>
+                <a href="{% url 'songs' %}">Songs</a>
+                <a href="{% url 'albums' %}">Albums</a>
+                <a href="{% url 'artists' %}">Artists</a>
+                <a href="{% url 'search-results' %}">Search</a>
+                <a href="{% url 'library' %}">Profile</a>
+            </nav>
+            <p class="footer-meta">Built with Django and a local-first music workflow.</p>
+        </div>
+    </footer>
+
+    <aside class="cookie-banner" id="cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie consent" hidden>
+        <p class="cookie-copy">
+            We use cookies to keep Music Hub reliable and remember your preferences. Allow cookies to enable the full experience.
+        </p>
+        <div class="cookie-actions">
+            <button class="btn btn-accent" id="cookie-allow" type="button">Allow cookies</button>
+            <button class="btn btn-ghost" id="cookie-essential" type="button">Only essential</button>
+        </div>
+    </aside>
+
+    <div class="report-modal" id="report-modal" hidden>
+        <div class="report-modal-backdrop" data-report-close aria-hidden="true"></div>
+        <section class="report-modal-panel panel" role="dialog" aria-modal="true" aria-labelledby="report-modal-title">
+            <div class="section-head report-modal-head">
+                <h2 id="report-modal-title" class="section-title">Report metadata issue</h2>
+                <button class="btn btn-ghost report-close-btn" type="button" data-report-close aria-label="Close report form">Close</button>
+            </div>
+            <p class="entity-sub" id="report-target-copy">Reviewing this item for missing or incorrect metadata.</p>
+            <form id="report-form" class="form-grid" novalidate>
+                <input type="hidden" name="target_kind" id="report-target-kind">
+                <input type="hidden" name="target_id" id="report-target-id">
+
+                <div class="form-field">
+                    <label for="report-issue-type">Issue type</label>
+                    <select id="report-issue-type" name="issue_type" required>
+                        <option value="incomplete">Incomplete info</option>
+                        <option value="false_info">False info</option>
+                    </select>
+                    <p class="form-error" id="report-error-issue_type" hidden></p>
+                </div>
+
+                <div class="form-field">
+                    <label for="report-details">Details (optional)</label>
+                    <textarea id="report-details" name="details" rows="4" maxlength="1000" placeholder="Tell us what is wrong or missing."></textarea>
+                    <p class="form-error" id="report-error-details" hidden></p>
+                </div>
+
+                <p class="form-error" id="report-error-general" hidden></p>
+
+                <div class="toolbar">
+                    <button class="btn btn-accent" id="report-submit" type="submit">Submit report</button>
+                    <button class="btn btn-ghost" type="button" data-report-close>Cancel</button>
+                </div>
+            </form>
+        </section>
+    </div>
+
     <script>
         (() => {
-            document.querySelectorAll("img[data-fallback]").forEach((img) => {
+            const applyFallback = (img) => {
                 const fallback = img.dataset.fallback;
                 if (!fallback) {
                     return;
                 }
+                if (img.src !== fallback) {
+                    img.src = fallback;
+                    img.classList.add("is-fallback");
+                }
+            };
 
-                img.addEventListener("error", () => {
-                    if (img.src !== fallback) {
-                        img.src = fallback;
-                        img.classList.add("is-fallback");
-                    }
-                });
+            document.querySelectorAll("img[data-fallback]").forEach((img) => {
+                img.addEventListener("error", () => applyFallback(img));
+                if (img.complete && img.naturalWidth === 0) {
+                    applyFallback(img);
+                }
             });
         })();
 
         (() => {
-            const root = document.documentElement;
-            const themeSelect = document.getElementById("theme-mode");
-            const storageKey = "music-hub-theme-mode";
+            const toggle = document.getElementById("mobile-nav-toggle");
+            const panel = document.getElementById("mobile-nav-panel");
 
-            const resolveTheme = (mode) => {
-                if (mode === "dark") return "dark";
-                if (mode === "light") return "light";
-                if (mode === "system") {
-                    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-                }
-                const hour = new Date().getHours();
-                return hour >= 19 || hour < 6 ? "dark" : "light";
-            };
-
-            const applyThemeMode = (mode) => {
-                const activeTheme = resolveTheme(mode);
-                root.setAttribute("data-theme", activeTheme);
-                if (themeSelect) themeSelect.value = mode;
-            };
-
-            const savedMode = localStorage.getItem(storageKey) || "system";
-            applyThemeMode(savedMode);
-
-            if (themeSelect) {
-                themeSelect.addEventListener("change", (event) => {
-                    const selectedMode = event.target.value;
-                    localStorage.setItem(storageKey, selectedMode);
-                    applyThemeMode(selectedMode);
-                });
-            }
-
-            const systemMedia = window.matchMedia("(prefers-color-scheme: dark)");
-            systemMedia.addEventListener("change", () => {
-                const mode = localStorage.getItem(storageKey) || "system";
-                if (mode === "system") {
-                    applyThemeMode(mode);
-                }
-            });
-
-            setInterval(() => {
-                const mode = localStorage.getItem(storageKey) || "system";
-                if (mode === "time") {
-                    applyThemeMode(mode);
-                }
-            }, 60000);
-        })();
-
-        (() => {
-            const input = document.getElementById("global-search");
-            const list = document.getElementById("suggestions");
-            const endpoint = "{% url 'search-suggestions' %}";
-            let timer = null;
-
-            if (!input || !list) {
+            if (!toggle || !panel) {
                 return;
             }
 
-            const closeSuggestions = () => {
-                list.classList.remove("show");
-                list.innerHTML = "";
+            const setOpen = (isOpen) => {
+                panel.hidden = !isOpen;
+                toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+                document.body.classList.toggle("nav-open", isOpen);
             };
 
-            input.addEventListener("keydown", (event) => {
-                if (event.key === "Enter") {
-                    closeSuggestions();
+            toggle.addEventListener("click", () => {
+                setOpen(panel.hidden);
+            });
+
+            panel.addEventListener("click", (event) => {
+                if (event.target instanceof Element && event.target.closest("a")) {
+                    setOpen(false);
                 }
             });
 
-            input.addEventListener("input", () => {
-                const value = input.value.trim();
-                clearTimeout(timer);
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && !panel.hidden) {
+                    setOpen(false);
+                }
+            });
 
-                if (value.length < 2) {
-                    closeSuggestions();
+            window.addEventListener("resize", () => {
+                if (window.innerWidth > 980) {
+                    setOpen(false);
+                }
+            });
+        })();
+
+        (() => {
+            const form = document.getElementById("header-search-form");
+            const input = document.getElementById("header-search-input");
+            const suggestionList = document.getElementById("search-suggestion-list");
+
+            if (!form || !input || !suggestionList) {
+                return;
+            }
+
+            let activeRequest = null;
+            let debounceId = null;
+
+            const clearSuggestions = () => {
+                suggestionList.innerHTML = "";
+                suggestionList.classList.remove("show");
+                suggestionList.hidden = true;
+                input.setAttribute("aria-expanded", "false");
+            };
+
+            const renderSuggestions = (results) => {
+                suggestionList.innerHTML = "";
+
+                if (!Array.isArray(results) || results.length === 0) {
+                    clearSuggestions();
                     return;
                 }
 
-                timer = setTimeout(async () => {
-                    try {
-                        const response = await fetch(`${endpoint}?q=${encodeURIComponent(value)}`);
-                        const data = await response.json();
-                        list.innerHTML = "";
+                results.forEach((item) => {
+                    const li = document.createElement("li");
+                    const link = document.createElement("a");
+                    const label = document.createElement("span");
+                    const type = document.createElement("span");
 
-                        if (!data.results || data.results.length === 0) {
-                            closeSuggestions();
-                            return;
-                        }
+                    li.setAttribute("role", "option");
+                    link.className = "suggestion-item";
+                    link.href = item.url;
 
-                        data.results.forEach((result) => {
-                            const li = document.createElement("li");
-                            const a = document.createElement("a");
-                            a.href = result.url;
-                            a.className = "suggestion-item";
-                            a.innerHTML = `<span class=\"suggestion-type\">${result.type}</span>${result.label}`;
-                            li.appendChild(a);
-                            list.appendChild(li);
-                        });
+                    label.textContent = item.label;
+                    type.className = "suggestion-type";
+                    type.textContent = item.type;
 
-                        list.classList.add("show");
-                    } catch (error) {
-                        closeSuggestions();
+                    link.append(label, type);
+                    li.appendChild(link);
+                    suggestionList.appendChild(li);
+                });
+
+                suggestionList.classList.add("show");
+                suggestionList.hidden = false;
+                input.setAttribute("aria-expanded", "true");
+            };
+
+            const fetchSuggestions = async (query) => {
+                if (activeRequest) {
+                    activeRequest.abort();
+                }
+
+                activeRequest = new AbortController();
+                try {
+                    const response = await fetch(`/search/suggestions/?q=${encodeURIComponent(query)}`, {
+                        signal: activeRequest.signal,
+                    });
+                    const data = await response.json();
+                    renderSuggestions(data.results || []);
+                } catch (error) {
+                    if (error.name !== "AbortError") {
+                        clearSuggestions();
                     }
-                }, 180);
+                }
+            };
+
+            input.addEventListener("input", () => {
+                const query = input.value.trim();
+                clearTimeout(debounceId);
+
+                if (query.length < 2) {
+                    clearSuggestions();
+                    return;
+                }
+
+                debounceId = window.setTimeout(() => fetchSuggestions(query), 180);
+            });
+
+            input.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    clearSuggestions();
+                    input.blur();
+                }
             });
 
             document.addEventListener("click", (event) => {
-                if (!list.contains(event.target) && event.target !== input) {
-                    closeSuggestions();
+                if (!(event.target instanceof Node) || !form.contains(event.target)) {
+                    clearSuggestions();
                 }
             });
+        })();
+
+        (() => {
+            const storageKey = "music-hub-cookie-consent";
+            const banner = document.getElementById("cookie-banner");
+            const allowButton = document.getElementById("cookie-allow");
+            const essentialButton = document.getElementById("cookie-essential");
+
+            if (!banner || !allowButton || !essentialButton) {
+                return;
+            }
+
+            const persistConsent = (value) => {
+                localStorage.setItem(storageKey, value);
+                const yearInSeconds = 60 * 60 * 24 * 365;
+                document.cookie = `music_hub_cookie_consent=${value}; Path=/; Max-Age=${yearInSeconds}; SameSite=Lax`;
+                banner.hidden = true;
+            };
+
+            if (!localStorage.getItem(storageKey)) {
+                banner.hidden = false;
+            }
+
+            allowButton.addEventListener("click", () => persistConsent("allow"));
+            essentialButton.addEventListener("click", () => persistConsent("essential"));
+        })();
+
+        (() => {
+            const menuSelector = "details.song-actions-menu";
+
+            const closeMenus = (except = null) => {
+                document.querySelectorAll(`${menuSelector}[open]`).forEach((menu) => {
+                    if (menu !== except) {
+                        menu.removeAttribute("open");
+                    }
+                });
+            };
+
+            document.addEventListener("click", (event) => {
+                const insideMenu = event.target.closest(menuSelector);
+                if (!insideMenu) {
+                    closeMenus();
+                    return;
+                }
+
+                closeMenus(insideMenu);
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    closeMenus();
+                }
+            });
+
+            document.addEventListener(
+                "toggle",
+                (event) => {
+                    const menu = event.target;
+                    if (!(menu instanceof HTMLElement) || !menu.matches(menuSelector)) {
+                        return;
+                    }
+                    if (menu.open) {
+                        closeMenus(menu);
+                    }
+                },
+                true
+            );
         })();
 
         (() => {
             const getCookie = (name) => {
                 const cookieValue = document.cookie
-                    .split('; ')
+                    .split("; ")
                     .find((row) => row.startsWith(`${name}=`));
-                return cookieValue ? decodeURIComponent(cookieValue.split('=')[1]) : "";
+                return cookieValue ? decodeURIComponent(cookieValue.split("=")[1]) : "";
             };
 
             const csrfToken = getCookie("csrftoken");
+            const FILLED_STAR = "\u2605";
+            const EMPTY_STAR = "\u2606";
+            const HEART = "\u2665";
+            const reportModal = document.getElementById("report-modal");
+            const reportForm = document.getElementById("report-form");
+            const reportSubmitButton = document.getElementById("report-submit");
+            const reportTargetKindInput = document.getElementById("report-target-kind");
+            const reportTargetIdInput = document.getElementById("report-target-id");
+            const reportTargetCopy = document.getElementById("report-target-copy");
+            const reportIssueTypeInput = document.getElementById("report-issue-type");
+            const reportDetailsInput = document.getElementById("report-details");
+            const reportGeneralError = document.getElementById("report-error-general");
+            const reportFieldErrors = {
+                issue_type: document.getElementById("report-error-issue_type"),
+                details: document.getElementById("report-error-details"),
+            };
+            let activeReportButton = null;
+
+            const closeActionMenu = (element) => {
+                const menu = element.closest("details.song-actions-menu");
+                if (menu) {
+                    menu.removeAttribute("open");
+                }
+            };
+
+            const handleAuthRedirect = (response, data) => {
+                if (response.status !== 401 || !data || !data.requires_login || !data.login_url) {
+                    return false;
+                }
+                const next = `${window.location.pathname}${window.location.search}`;
+                window.location.href = `${data.login_url}?next=${encodeURIComponent(next)}`;
+                return true;
+            };
+
+            const updateFavoriteButton = (button, isFavorite) => {
+                button.dataset.isFavorite = isFavorite ? "true" : "false";
+                button.classList.toggle("is-favorite", isFavorite);
+
+                if (button.classList.contains("icon-btn")) {
+                    button.textContent = isFavorite ? FILLED_STAR : EMPTY_STAR;
+                    button.setAttribute("aria-pressed", isFavorite ? "true" : "false");
+                    return;
+                }
+
+                button.textContent = isFavorite ? "Saved" : "Save";
+            };
 
             const updateFavoriteButtons = (songId, isFavorite) => {
-                document.querySelectorAll(`.favorite-btn[data-song-id=\"${songId}\"]`).forEach((button) => {
-                    button.dataset.isFavorite = isFavorite ? "true" : "false";
-                    button.classList.toggle("is-favorite", isFavorite);
-                    button.textContent = isFavorite ? "Favorited" : "Favorite";
+                document.querySelectorAll(`.favorite-btn[data-song-id="${songId}"]`).forEach((button) => {
+                    updateFavoriteButton(button, isFavorite);
                 });
             };
 
+            const updateLikeButton = (button, isLiked) => {
+                button.dataset.isLiked = isLiked ? "true" : "false";
+                button.classList.toggle("is-liked", isLiked);
+                if (button.classList.contains("icon-btn")) {
+                    button.textContent = HEART;
+                }
+                button.setAttribute("aria-pressed", isLiked ? "true" : "false");
+            };
+
+            const updateLikeButtons = (songId, isLiked) => {
+                document.querySelectorAll(`.like-btn[data-song-id="${songId}"]`).forEach((button) => {
+                    updateLikeButton(button, isLiked);
+                });
+            };
+
+            const clearReportErrors = () => {
+                if (reportGeneralError) {
+                    reportGeneralError.hidden = true;
+                    reportGeneralError.textContent = "";
+                }
+                Object.values(reportFieldErrors).forEach((fieldError) => {
+                    if (!fieldError) {
+                        return;
+                    }
+                    fieldError.hidden = true;
+                    fieldError.textContent = "";
+                });
+            };
+
+            const setReportFieldError = (fieldName, message) => {
+                const fieldError = reportFieldErrors[fieldName];
+                if (fieldError) {
+                    fieldError.hidden = false;
+                    fieldError.textContent = message;
+                    return;
+                }
+                if (reportGeneralError) {
+                    reportGeneralError.hidden = false;
+                    reportGeneralError.textContent = message;
+                }
+            };
+
+            const closeReportModal = () => {
+                if (!reportModal) {
+                    return;
+                }
+                reportModal.hidden = true;
+                document.body.classList.remove("modal-open");
+                activeReportButton = null;
+                clearReportErrors();
+            };
+
+            const openReportModal = (reportButton) => {
+                if (
+                    !reportModal
+                    || !reportForm
+                    || !reportTargetKindInput
+                    || !reportTargetIdInput
+                    || !reportIssueTypeInput
+                    || !reportDetailsInput
+                ) {
+                    return;
+                }
+
+                const targetKind = reportButton.dataset.targetKind;
+                const targetId = reportButton.dataset.targetId;
+                if (!targetKind || !targetId) {
+                    return;
+                }
+
+                activeReportButton = reportButton;
+                reportTargetKindInput.value = targetKind;
+                reportTargetIdInput.value = targetId;
+                reportIssueTypeInput.value = "incomplete";
+                reportDetailsInput.value = "";
+                clearReportErrors();
+
+                const targetLabel = targetKind.charAt(0).toUpperCase() + targetKind.slice(1);
+                if (reportTargetCopy) {
+                    reportTargetCopy.textContent = `You are reporting a ${targetLabel} metadata issue.`;
+                }
+
+                reportModal.hidden = false;
+                document.body.classList.add("modal-open");
+                reportIssueTypeInput.focus();
+                closeActionMenu(reportButton);
+            };
+
+            document.querySelectorAll("[data-report-close]").forEach((element) => {
+                element.addEventListener("click", () => {
+                    closeReportModal();
+                });
+            });
+
+            document.addEventListener("keydown", (event) => {
+                if (event.key === "Escape" && reportModal && !reportModal.hidden) {
+                    closeReportModal();
+                }
+            });
+
+            if (reportForm) {
+                reportForm.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+                    if (!reportSubmitButton) {
+                        return;
+                    }
+
+                    clearReportErrors();
+                    reportSubmitButton.disabled = true;
+
+                    if (activeReportButton) {
+                        activeReportButton.classList.add("is-pending");
+                    }
+
+                    try {
+                        const body = new URLSearchParams(new FormData(reportForm));
+                        const response = await fetch("/reports/create/", {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": csrfToken,
+                                "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                            },
+                            body: body.toString(),
+                        });
+
+                        const data = await response.json().catch(() => ({}));
+                        if (handleAuthRedirect(response, data)) {
+                            return;
+                        }
+
+                        if (response.ok && data.ok) {
+                            if (activeReportButton) {
+                                activeReportButton.classList.add("is-reported");
+                                activeReportButton.setAttribute("title", "Report submitted");
+                            }
+                            closeReportModal();
+                            return;
+                        }
+
+                        if (data && data.errors) {
+                            Object.entries(data.errors).forEach(([fieldName, fieldErrors]) => {
+                                const firstError = Array.isArray(fieldErrors) && fieldErrors.length
+                                    ? fieldErrors[0].message || "Invalid value."
+                                    : "Invalid value.";
+                                setReportFieldError(fieldName, firstError);
+                            });
+                        } else if (data && data.error) {
+                            setReportFieldError("__all__", data.error);
+                        } else {
+                            setReportFieldError("__all__", "Unable to submit report right now.");
+                        }
+                    } catch (error) {
+                        setReportFieldError("__all__", "Unable to submit report right now.");
+                    } finally {
+                        reportSubmitButton.disabled = false;
+                        if (activeReportButton) {
+                            activeReportButton.classList.remove("is-pending");
+                        }
+                    }
+                });
+            }
+
             document.addEventListener("click", async (event) => {
-                const button = event.target.closest(".favorite-btn");
-                if (!button) {
+                const favoriteButton = event.target.closest(".favorite-btn");
+                if (favoriteButton) {
+                    event.preventDefault();
+                    const songId = favoriteButton.dataset.songId;
+                    if (!songId) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/songs/${songId}/favorite-toggle/`, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": csrfToken,
+                            },
+                        });
+
+                        const data = await response.json().catch(() => ({}));
+                        if (handleAuthRedirect(response, data)) {
+                            return;
+                        }
+
+                        if (response.ok && data.ok) {
+                            updateFavoriteButtons(songId, data.is_favorite);
+                            closeActionMenu(favoriteButton);
+                        }
+                    } catch (error) {
+                        // no-op
+                    }
+                    return;
+                }
+
+                const likeButton = event.target.closest(".like-btn");
+                if (likeButton) {
+                    event.preventDefault();
+                    const songId = likeButton.dataset.songId;
+                    if (!songId) {
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/songs/${songId}/like-toggle/`, {
+                            method: "POST",
+                            headers: {
+                                "X-CSRFToken": csrfToken,
+                            },
+                        });
+
+                        const data = await response.json().catch(() => ({}));
+                        if (handleAuthRedirect(response, data)) {
+                            return;
+                        }
+
+                        if (response.ok && data.ok) {
+                            updateLikeButtons(songId, data.is_liked);
+                            closeActionMenu(likeButton);
+                        }
+                    } catch (error) {
+                        // no-op
+                    }
+                    return;
+                }
+
+                const reportButton = event.target.closest(".report-btn");
+                if (!reportButton) {
                     return;
                 }
 
                 event.preventDefault();
-                const songId = button.dataset.songId;
-                if (!songId) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/songs/${songId}/favorite-toggle/`, {
-                        method: "POST",
-                        headers: {
-                            "X-CSRFToken": csrfToken,
-                        },
-                    });
-                    const data = await response.json();
-                    if (response.ok && data.ok) {
-                        updateFavoriteButtons(songId, data.is_favorite);
-                    }
-                } catch (error) {
-                    // no-op
-                }
+                openReportModal(reportButton);
             });
         })();
     </script>
-
     {% block extra_scripts %}{% endblock %}
 </body>
 </html>

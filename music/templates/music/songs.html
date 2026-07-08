@@ -1,36 +1,73 @@
 {% extends 'music/base.html' %}
 
+{% block title %}Songs | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
 {% block content %}
-<section class="panel p-4">
-    <div class="section-head">
-        <h2>All Songs</h2>
-        <a href="{% url 'add-song' %}" class="btn btn-accent btn-sm">Add Song</a>
-    </div>
-
-    <div class="card-grid">
-        {% for song in songs %}
-            <div class="entity-card">
-                <a href="{% url 'song-detail' song.id %}">
-                    {% if song.album and song.album.cover %}
-                        <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
-                    {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                    {% endif %}
-                    <p class="entity-title">{{ song.title }}</p>
-                </a>
-                <p class="entity-sub mb-1">{{ song.artist.name }}{% if song.album %} &middot; {{ song.album.title }}{% endif %}</p>
-                <span class="tag">{{ song.genre }}</span>
-
-                <div class="d-flex gap-2 mt-3 flex-wrap">
-                    <button class="favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if song.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
-                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-song' song.id %}">Edit</a>
-                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-song' song.id %}">Delete</a>
-                </div>
+<div class="page-stack home-stack">
+    <section class="home-section section songs-page">
+        <div class="section-head">
+            <div>
+                <h1 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v11.8a3.5 3.5 0 1 1-2-.1V7l10-2v10.8a3.5 3.5 0 1 1-2-.1V7z"></path></svg>
+                    Songs
+                </h1>
+                <p class="page-note">Browse, like, and organize tracks from your local archive.</p>
             </div>
-        {% empty %}
-            <div class="entity-card"><p class="entity-sub mb-0">No songs added yet.</p></div>
-        {% endfor %}
-    </div>
-</section>
-{% endblock %}
+            {% if request.user.is_staff %}
+                <a href="{% url 'add-song' %}" class="btn btn-accent">Add song</a>
+            {% endif %}
+        </div>
 
+        <div class="list-controls">
+            {% include 'music/partials/per_page_control.html' with preserved_params=songs_per_page_params per_page=per_page per_page_options=per_page_options control_id='songs-per-page' %}
+        </div>
+
+        <div class="home-song-grid">
+            {% for card in song_cards %}
+                {% with song=card.song %}
+                    <article class="home-song-card">
+                        <div class="home-song-media">
+                            <a href="{% url 'song-detail' song.id %}" class="home-song-cover-link">
+                                <img src="{{ song.album.cover_src|default:album_placeholder }}" alt="{{ song.title }}" class="home-song-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                            </a>
+                            {% if card.genre_label %}
+                                <span class="home-song-genre">{{ card.genre_label }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="home-song-body">
+                            <div class="home-song-artist">
+                                <img src="{{ song.artist.image_src|default:artist_placeholder }}" alt="{{ song.artist.name }}" class="home-song-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                                <p class="home-song-artist-name">{{ song.artist.name }}</p>
+                            </div>
+
+                            <div class="home-song-meta">
+                                <a href="{% url 'song-detail' song.id %}" class="home-song-title">{{ song.title }}</a>
+                                <p class="home-song-subtitle">
+                                    {% if song.album %}{{ song.album.title }}{% else %}Single{% endif %}
+                                </p>
+                            </div>
+
+                            <div class="home-song-card-actions">
+                                {% if request.user.is_authenticated %}
+                                    <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                        {% if song.id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                    </button>
+                                    <button class="btn icon-btn home-card-icon-btn like-btn{% if song.id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ song.id }}" data-is-liked="{% if song.id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                        &#10084;
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </article>
+                {% endwith %}
+            {% empty %}
+                <div class="empty-state">No songs found.</div>
+            {% endfor %}
+        </div>
+
+        {% include 'music/partials/pagination.html' with page_obj=songs_page page_param='page' pagination_query_prefix=songs_pagination_query pagination_params=songs_pagination_params %}
+    </section>
+</div>
+{% endblock %}

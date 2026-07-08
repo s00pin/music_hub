@@ -1,40 +1,54 @@
 {% extends 'music/base.html' %}
 
+{% block title %}{{ song.title }} | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
 {% block content %}
-<section class="panel detail-hero mb-4">
-    <div class="row g-4 align-items-center">
-        <div class="col-md-3">
-            {% if song.album and song.album.cover %}
-                <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art entity-art-detail" loading="lazy" data-fallback="{{ album_placeholder }}">
-            {% else %}
-                <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art entity-art-detail" loading="lazy">
-            {% endif %}
+<div class="page-stack home-stack">
+<section class="home-section section artist-hero">
+    <div class="artist-hero-media">
+            <img src="{{ song.album.cover_src|default:album_placeholder }}" alt="{{ song.title }}" class="artist-hero-image" loading="lazy" data-fallback="{{ album_placeholder }}">
         </div>
-        <div class="col-md-9">
-            <h1 class="mb-2">{{ song.title }}</h1>
-            <p class="detail-meta mb-3">
+        <div class="artist-hero-content">
+            <p class="home-kicker">Song details</p>
+            <h1 class="hero-title">{{ song.title }}</h1>
+            <p class="hero-copy">
                 Artist: <a href="{% url 'artist-detail' song.artist.id %}">{{ song.artist.name }}</a>
                 {% if song.album %}
                     &middot; Album: <a href="{% url 'album-detail' song.album.id %}">{{ song.album.title }}</a>
                 {% endif %}
             </p>
-            <div class="d-flex flex-wrap gap-2 mb-3">
-                <span class="tag">{{ song.genre }}</span>
-                {% if song.release_date %}<span class="tag">{{ song.release_date }}</span>{% endif %}
+            <div class="toolbar">
+                {% if song.genre %}<span class="pill">{{ song.genre }}</span>{% endif %}
+                {% if song.release_date %}<span class="pill">{{ song.release_date|date:"Y" }}</span>{% endif %}
             </div>
-            <div class="d-flex gap-2 mt-3 flex-wrap">
-                <button class="favorite-btn{% if is_favorite %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if is_favorite %}true{% else %}false{% endif %}">{% if is_favorite %}Favorited{% else %}Favorite{% endif %}</button>
-                <a href="{% url 'edit-song' song.id %}" class="btn btn-soft">Edit Song</a>
-                <a href="{% url 'delete-song' song.id %}" class="btn btn-outline-danger">Delete Song</a>
+            <div class="toolbar">
+                {% if request.user.is_authenticated %}
+                    <button class="btn icon-btn star-btn favorite-btn{% if is_favorite %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if is_favorite %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                        {% if is_favorite %}&#9733;{% else %}&#9734;{% endif %}
+                    </button>
+                    <button class="btn icon-btn like-btn{% if is_liked %} is-liked{% endif %}" data-song-id="{{ song.id }}" data-is-liked="{% if is_liked %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                        &#10084;
+                    </button>
+                {% endif %}
+                <button class="btn icon-btn report-btn" data-target-kind="song" data-target-id="{{ song.id }}" aria-label="Report metadata issue">
+                    !
+                </button>
+                {% if request.user.is_staff %}
+                    <a href="{% url 'edit-song' song.id %}" class="btn btn-ghost">Edit song</a>
+                    <a href="{% url 'delete-song' song.id %}" class="btn btn-danger">Delete song</a>
+                {% endif %}
             </div>
         </div>
-    </div>
 </section>
 
-<section class="panel p-4 mb-4" id="platform-links-panel" data-song-id="{{ song.id }}">
+<section class="home-section section" id="platform-links-panel" data-song-id="{{ song.id }}">
     <div class="section-head">
-        <h2>Where to Listen or Watch</h2>
-        <p class="geo-note mb-0" id="geo-note">Using global options.</p>
+        <h2 class="section-title title-with-icon">
+            <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v11.8a3.5 3.5 0 1 1-2-.1V7l10-2v10.8a3.5 3.5 0 1 1-2-.1V7z"></path></svg>
+            Listen options
+        </h2>
+        <p class="entity-sub" id="geo-note">Using global options.</p>
     </div>
 
     <div class="platform-grid" id="platform-links">
@@ -44,29 +58,59 @@
     </div>
 </section>
 
-<section class="panel p-4">
+<section class="home-section section">
     <div class="section-head">
-        <h2>More from {{ song.artist.name }}</h2>
+        <h2 class="section-title title-with-icon">
+            <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"></path></svg>
+            More from {{ song.artist.name }}
+        </h2>
     </div>
-    <div class="card-grid">
-        {% for item in related_songs %}
-            <div class="entity-card">
-                <a href="{% url 'song-detail' item.id %}">
-                    {% if item.album and item.album.cover %}
-                        <img src="{{ item.album.cover.url }}" alt="{{ item.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
-                    {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                    {% endif %}
-                    <p class="entity-title">{{ item.title }}</p>
-                </a>
-                <p class="entity-sub mb-2">{% if item.album %}{{ item.album.title }}{% else %}Single{% endif %} &middot; {{ item.genre }}</p>
-                <button class="favorite-btn{% if item.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ item.id }}" data-is-favorite="{% if item.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if item.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
-            </div>
+    <div class="home-song-grid">
+        {% for card in related_song_cards %}
+            {% with item=card.song %}
+                <article class="home-song-card">
+                    <div class="home-song-media">
+                        <a href="{% url 'song-detail' item.id %}" class="home-song-cover-link">
+                            <img src="{{ item.album.cover_src|default:album_placeholder }}" alt="{{ item.title }}" class="home-song-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                        </a>
+                        {% if card.genre_label %}
+                            <span class="home-song-genre">{{ card.genre_label }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="home-song-body">
+                        <div class="home-song-artist">
+                            <img src="{{ item.artist.image_src|default:artist_placeholder }}" alt="{{ item.artist.name }}" class="home-song-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                            <p class="home-song-artist-name">{{ item.artist.name }}</p>
+                        </div>
+
+                        <div class="home-song-meta">
+                            <a href="{% url 'song-detail' item.id %}" class="home-song-title">{{ item.title }}</a>
+                            <p class="home-song-subtitle">{% if item.album %}{{ item.album.title }}{% else %}Single{% endif %}</p>
+                        </div>
+
+                        <div class="home-song-card-actions">
+                            {% if request.user.is_authenticated %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if item.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ item.id }}" data-is-favorite="{% if item.id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if item.id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if item.id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ item.id }}" data-is-liked="{% if item.id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                            <button class="btn icon-btn report-btn" data-target-kind="song" data-target-id="{{ item.id }}" aria-label="Report metadata issue">
+                                !
+                            </button>
+                        </div>
+                    </div>
+                </article>
+            {% endwith %}
         {% empty %}
-            <div class="entity-card"><p class="entity-sub mb-0">No related songs found.</p></div>
+            <div class="empty-state">No related songs found.</div>
         {% endfor %}
     </div>
 </section>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -139,4 +183,3 @@
 })();
 </script>
 {% endblock %}
-

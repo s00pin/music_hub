@@ -1,0 +1,431 @@
+{% extends "music/base.html" %}
+
+{% block title %}Dashboard | Music Hub{% endblock %}
+
+{% block content %}
+<div class="page-stack home-stack">
+    <section class="home-section home-hero" aria-label="Dashboard introduction">
+        <div class="home-hero-copy">
+            <p class="home-kicker">Music Archive Platform</p>
+            <h1 class="hero-title">Track your catalog. Discover new metadata. Keep listening in flow.</h1>
+            <p class="hero-copy">
+                Search local records first, import trusted metadata when needed, and manage favorites and likes from one streamlined workspace.
+            </p>
+        </div>
+    </section>
+
+    <section class="home-metrics-marquee" aria-label="Dashboard metrics marquee">
+        <div class="home-marquee-viewport">
+            <div class="home-marquee-track home-marquee-track-right">
+                <div class="home-metrics-group">
+                    {% for metric in dashboard_metrics %}
+                        <article class="home-metrics-item">
+                            <p class="home-metrics-value">{{ metric.value }}</p>
+                            <p class="home-metrics-label">{{ metric.label }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+                <div class="home-metrics-group" aria-hidden="true">
+                    {% for metric in dashboard_metrics %}
+                        <article class="home-metrics-item">
+                            <p class="home-metrics-value">{{ metric.value }}</p>
+                            <p class="home-metrics-label">{{ metric.label }}</p>
+                        </article>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-marquee" aria-label="Trending genres marquee">
+        <div class="home-marquee-viewport">
+            <div class="home-marquee-track">
+                <div class="home-marquee-group">
+                    {% for shortcut in shortcut_genres %}
+                        <a class="home-marquee-item" href="{% url 'search-results' %}?type=song&genre={{ shortcut.genre|urlencode }}">{{ shortcut.label }}</a>
+                    {% endfor %}
+                </div>
+                <div class="home-marquee-group" aria-hidden="true">
+                    {% for shortcut in shortcut_genres %}
+                        <a class="home-marquee-item" href="{% url 'search-results' %}?type=song&genre={{ shortcut.genre|urlencode }}" tabindex="-1">{{ shortcut.label }}</a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-section section home-section-recent">
+        <div class="home-inline-tools">
+            <form class="home-search-form" action="{% url 'search-results' %}" method="get" role="search">
+                <label class="visually-hidden" for="home-query">Search your music archive</label>
+                <input id="home-query" class="search-input home-search-input" type="search" name="q" placeholder="Search songs, artists, albums, genres">
+
+                <label class="visually-hidden" for="home-type">Result type</label>
+                <select id="home-type" class="home-search-select" name="type">
+                    <option value="all">All results</option>
+                    <option value="song">Songs</option>
+                    <option value="artist">Artists</option>
+                    <option value="album">Albums</option>
+                </select>
+
+                <button class="btn btn-accent home-search-btn" type="submit">Search</button>
+            </form>
+
+            <div class="toolbar home-browse-actions">
+                <a class="btn btn-ghost" href="{% url 'songs' %}">Browse songs</a>
+                <a class="btn btn-ghost" href="{% url 'albums' %}">Browse albums</a>
+                <a class="btn btn-ghost" href="{% url 'artists' %}">Browse artists</a>
+            </div>
+        </div>
+
+        <div class="section-head">
+            <h2 class="section-title title-with-icon">
+                <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5"></path></svg>
+                Recently Added
+            </h2>
+        </div>
+
+        <div class="home-song-grid">
+            {% for card in recent_song_cards %}
+                <article class="home-song-card">
+                    <div class="home-song-media">
+                        <a href="{% url 'song-detail' card.song.id %}" class="home-song-cover-link">
+                            <img src="{{ card.song.album.cover_src|default:album_placeholder }}" alt="{{ card.song.title }}" class="home-song-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                        </a>
+                        {% if card.genre_label %}
+                            <span class="home-song-genre">{{ card.genre_label }}</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="home-song-body">
+                        <div class="home-song-artist">
+                            <img src="{{ card.song.artist.image_src|default:artist_placeholder }}" alt="{{ card.song.artist.name }}" class="home-song-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                            <p class="home-song-artist-name">{{ card.song.artist.name }}</p>
+                        </div>
+
+                        <div class="home-song-meta">
+                            <a href="{% url 'song-detail' card.song.id %}" class="home-song-title">{{ card.song.title }}</a>
+                            <p class="home-song-subtitle">
+                                {% if card.song.album %}{{ card.song.album.title }}{% else %}Single{% endif %}
+                            </p>
+                        </div>
+
+                        <div class="home-song-card-actions">
+                            {% if request.user.is_authenticated %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if card.song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ card.song.id }}" data-is-favorite="{% if card.song.id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if card.song.id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if card.song.id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ card.song.id }}" data-is-liked="{% if card.song.id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty-state">No songs in your archive yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="home-section section home-section-albums">
+        <div class="section-head">
+            <h2 class="section-title title-with-icon">
+                <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zM7 8h10v8H7z"></path></svg>
+                Popular Albums
+            </h2>
+        </div>
+
+        <div class="home-album-grid">
+            {% for card in album_cards %}
+                <article class="home-catalog-card home-album-card">
+                    <div class="home-catalog-media">
+                        <a href="{% url 'album-detail' card.album.id %}">
+                            <img src="{{ card.album.cover_src|default:album_placeholder }}" alt="{{ card.album.title }}" class="home-catalog-cover home-album-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                        </a>
+                        {% if card.genre_label %}
+                            <span class="home-song-genre">{{ card.genre_label }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="home-catalog-body">
+                        <a href="{% url 'album-detail' card.album.id %}" class="home-catalog-title">{{ card.album.title }}</a>
+                        <div class="home-catalog-artist">
+                            <img src="{{ card.album.artist.image_src|default:artist_placeholder }}" alt="{{ card.album.artist.name }}" class="home-catalog-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                            <p class="home-catalog-subtitle">{{ card.album.artist.name }}</p>
+                        </div>
+                        <div class="home-catalog-actions">
+                            {% if request.user.is_authenticated and card.representative_song_id %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if card.representative_song_id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-favorite="{% if card.representative_song_id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if card.representative_song_id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if card.representative_song_id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-liked="{% if card.representative_song_id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty-state">No albums yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="home-section section home-section-artists">
+        <div class="section-head">
+            <h2 class="section-title title-with-icon">
+                <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m8 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6M2 20a5.5 5.5 0 0 1 11 0v1H2zm11 1v-1a4.5 4.5 0 0 1 8 0v1z"></path></svg>
+                Featured Artists
+            </h2>
+        </div>
+
+        <div class="home-artist-grid">
+            {% for card in artist_cards %}
+                <article class="home-catalog-card home-artist-card">
+                    <a href="{% url 'artist-detail' card.artist.id %}">
+                        <img src="{{ card.artist.image_src|default:artist_placeholder }}" alt="{{ card.artist.name }}" class="home-catalog-cover home-artist-cover" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                    </a>
+                    <div class="home-catalog-body">
+                        <a href="{% url 'artist-detail' card.artist.id %}" class="home-catalog-title">{{ card.artist.name }}</a>
+                        <p class="home-catalog-subtitle">{{ card.artist.song_count }} song{{ card.artist.song_count|pluralize }}</p>
+                        <div class="home-catalog-actions">
+                            {% if request.user.is_authenticated and card.representative_song_id %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if card.representative_song_id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-favorite="{% if card.representative_song_id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if card.representative_song_id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if card.representative_song_id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-liked="{% if card.representative_song_id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty-state">No artists yet.</div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="home-section section home-section-continue">
+        <div class="section-head">
+            <h2 class="section-title title-with-icon">
+                <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v11.8a3.5 3.5 0 1 1-2-.1V7l10-2v10.8a3.5 3.5 0 1 1-2-.1V7z"></path></svg>
+                Continue Listening
+            </h2>
+        </div>
+
+        <ul class="song-list">
+            {% for row in featured_song_rows %}
+                {% with song=row.song %}
+                    <li class="song-row">
+                        <div class="song-row-main">
+                            <img src="{{ song.album.cover_src|default:album_placeholder }}" alt="{{ song.title }}" class="song-row-thumb" loading="lazy" data-fallback="{{ album_placeholder }}">
+                            <div class="song-row-copy">
+                                <a href="{% url 'song-detail' song.id %}" class="song-row-title">{{ song.title }}</a>
+                                <p class="song-row-meta">
+                                    {{ song.artist.name }}
+                                    {% if song.album %}&middot; {{ song.album.title }}{% endif %}
+                                    {% if row.genre_label %}&middot; {{ row.genre_label }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+
+                        <details class="song-actions-menu">
+                            <summary class="song-actions-toggle" aria-label="Song actions">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5.5a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2m0 4.9a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2m0 4.9a1.6 1.6 0 1 0 0 3.2 1.6 1.6 0 0 0 0-3.2"></path></svg>
+                            </summary>
+                            <div class="song-actions-list">
+                                <a class="btn btn-ghost song-action-link" href="{% url 'song-detail' song.id %}">Open details</a>
+                                {% if request.user.is_authenticated %}
+                                    <button class="btn icon-btn star-btn favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                        {% if song.id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                    </button>
+                                    <button class="btn icon-btn like-btn{% if song.id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ song.id }}" data-is-liked="{% if song.id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                        &#10084;
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </details>
+                    </li>
+                {% endwith %}
+            {% empty %}
+                <li class="empty-state">No tracks to continue yet.</li>
+            {% endfor %}
+        </ul>
+    </section>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    (() => {
+        const DASHBOARD_PAGE_SELECTOR = "body.page-dashboard, body.page-home";
+        if (!document.querySelector(DASHBOARD_PAGE_SELECTOR)) {
+            return;
+        }
+
+        const marquees = Array.from(document.querySelectorAll(".home-marquee-track"));
+        if (!marquees.length) {
+            return;
+        }
+
+        let resizeTimer = null;
+        let animationFrameId = null;
+
+        const disableFocus = (root) => {
+            root.querySelectorAll("a, button, input, select, textarea, [tabindex]").forEach((el) => {
+                if (!(el instanceof HTMLElement)) {
+                    return;
+                }
+                if (!el.hasAttribute("data-marquee-original-tabindex")) {
+                    el.setAttribute("data-marquee-original-tabindex", el.getAttribute("tabindex") || "");
+                }
+                el.setAttribute("tabindex", "-1");
+            });
+        };
+
+        const getGroups = (track) => {
+            const groups = Array.from(track.children).filter((child) =>
+                child.classList.contains("home-marquee-group") || child.classList.contains("home-metrics-group")
+            );
+
+            if (!groups.length) {
+                return null;
+            }
+
+            const primary = groups[0];
+            let clone = groups[1] || null;
+
+            if (!clone) {
+                clone = primary.cloneNode(true);
+                track.appendChild(clone);
+            }
+
+            while (track.children.length > 2) {
+                track.removeChild(track.lastElementChild);
+            }
+
+            clone.className = primary.className;
+            clone.innerHTML = primary.innerHTML;
+            clone.setAttribute("aria-hidden", "true");
+            disableFocus(clone);
+
+            return { primary, clone };
+        };
+
+        const clearGroupSizing = (group) => {
+            group.style.removeProperty("width");
+            group.style.removeProperty("min-width");
+            group.style.removeProperty("flex-basis");
+            group.style.removeProperty("column-gap");
+            group.style.removeProperty("row-gap");
+        };
+
+        const restartAnimation = (track) => {
+            track.style.animation = "none";
+            void track.offsetWidth;
+            track.style.animation = "";
+        };
+
+        const measureAndApply = (track) => {
+            const viewport = track.closest(".home-marquee-viewport");
+            if (!(viewport instanceof HTMLElement)) {
+                return;
+            }
+
+            const groups = getGroups(track);
+            if (!groups) {
+                return;
+            }
+
+            const { primary, clone } = groups;
+
+            clearGroupSizing(primary);
+            clearGroupSizing(clone);
+
+            const viewportWidth = viewport.getBoundingClientRect().width;
+            if (viewportWidth <= 0) {
+                return;
+            }
+
+            if (!primary.dataset.baseMarkup) {
+                primary.dataset.baseMarkup = primary.innerHTML;
+            }
+            const baseMarkup = primary.dataset.baseMarkup || primary.innerHTML;
+            if (!baseMarkup.trim()) {
+                return;
+            }
+
+            primary.innerHTML = baseMarkup;
+            primary.style.setProperty("column-gap", "0px", "important");
+            primary.style.setProperty("row-gap", "0px", "important");
+
+            let guard = 0;
+            while (primary.scrollWidth < viewportWidth && guard < 12) {
+                primary.insertAdjacentHTML("beforeend", baseMarkup);
+                guard += 1;
+            }
+
+            if (primary.scrollWidth < viewportWidth) {
+                primary.insertAdjacentHTML("beforeend", baseMarkup);
+            }
+
+            clone.innerHTML = primary.innerHTML;
+            disableFocus(clone);
+
+            const safeWidth = Math.max(Math.ceil(primary.scrollWidth), 1);
+
+            [primary, clone].forEach((group) => {
+                group.style.setProperty("column-gap", "0px", "important");
+                group.style.setProperty("row-gap", "0px", "important");
+                group.style.setProperty("width", `${safeWidth}px`, "important");
+                group.style.setProperty("min-width", `${safeWidth}px`, "important");
+                group.style.setProperty("flex-basis", `${safeWidth}px`, "important");
+            });
+
+            track.style.setProperty("--loop-width", `${safeWidth}px`);
+            track.style.setProperty("--loop-gap", "0px");
+
+            const pixelsPerSecond = viewportWidth < 640 ? 58 : viewportWidth < 1200 ? 74 : 92;
+            const durationSeconds = Math.max(14, safeWidth / pixelsPerSecond);
+            track.style.setProperty("--loop-duration", `${durationSeconds}s`);
+            restartAnimation(track);
+        };
+
+        const refreshAll = () => {
+            marquees.forEach((track) => measureAndApply(track));
+        };
+
+        const scheduleRefresh = () => {
+            if (resizeTimer) {
+                window.clearTimeout(resizeTimer);
+            }
+            resizeTimer = window.setTimeout(() => {
+                if (animationFrameId) {
+                    cancelAnimationFrame(animationFrameId);
+                }
+                animationFrameId = requestAnimationFrame(refreshAll);
+            }, 90);
+        };
+
+        refreshAll();
+        window.addEventListener("resize", scheduleRefresh, { passive: true });
+        window.addEventListener("orientationchange", scheduleRefresh, { passive: true });
+        window.addEventListener("load", scheduleRefresh, { passive: true });
+
+        if (document.fonts && typeof document.fonts.ready?.then === "function") {
+            document.fonts.ready.then(() => scheduleRefresh());
+        }
+
+        if ("ResizeObserver" in window) {
+            const observer = new ResizeObserver(() => scheduleRefresh());
+            marquees.forEach((track) => {
+                const viewport = track.closest(".home-marquee-viewport");
+                if (viewport instanceof HTMLElement) {
+                    observer.observe(viewport);
+                }
+            });
+        }
+    })();
+</script>
+{% endblock %}

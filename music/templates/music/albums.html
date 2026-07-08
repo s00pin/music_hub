@@ -1,33 +1,67 @@
 {% extends 'music/base.html' %}
 
+{% block title %}Albums | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
 {% block content %}
-<section class="panel p-4">
-    <div class="section-head">
-        <h2>All Albums</h2>
-        <a href="{% url 'add-album' %}" class="btn btn-accent btn-sm">Add Album</a>
-    </div>
-
-    <div class="card-grid">
-        {% for album in albums %}
-            <div class="entity-card">
-                <a href="{% url 'album-detail' album.id %}">
-                    {% if album.cover %}
-                        <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
-                    {% else %}
-                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                    {% endif %}
-                    <p class="entity-title">{{ album.title }}</p>
-                </a>
-                <p class="entity-sub mb-1">{{ album.artist.name }} &middot; {{ album.song_count }} song{{ album.song_count|pluralize }}</p>
-
-                <div class="d-flex gap-2 mt-3">
-                    <a class="btn btn-outline-secondary btn-sm" href="{% url 'edit-album' album.id %}">Edit</a>
-                    <a class="btn btn-outline-danger btn-sm" href="{% url 'delete-album' album.id %}">Delete</a>
-                </div>
+<div class="page-stack home-stack">
+    <section class="home-section section albums-page">
+        <div class="section-head">
+            <div>
+                <h1 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zM7 8h10v8H7z"></path></svg>
+                    Albums
+                </h1>
+                <p class="page-note">Browse album artwork, release details, and linked tracks.</p>
             </div>
-        {% empty %}
-            <div class="entity-card"><p class="entity-sub mb-0">No albums added yet.</p></div>
-        {% endfor %}
-    </div>
-</section>
+            {% if request.user.is_staff %}
+                <a href="{% url 'add-album' %}" class="btn btn-accent">Add album</a>
+            {% endif %}
+        </div>
+
+        <div class="list-controls">
+            {% include 'music/partials/per_page_control.html' with preserved_params=albums_per_page_params per_page=per_page per_page_options=per_page_options control_id='albums-per-page' %}
+        </div>
+
+        <div class="home-album-grid">
+            {% for card in album_cards %}
+                <article class="home-catalog-card home-album-card">
+                    <div class="home-catalog-media">
+                        <a href="{% url 'album-detail' card.album.id %}">
+                            <img src="{{ card.album.cover_src|default:album_placeholder }}" alt="{{ card.album.title }}" class="home-catalog-cover home-album-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                        </a>
+                        {% if card.genre_label %}
+                            <span class="home-song-genre">{{ card.genre_label }}</span>
+                        {% endif %}
+                    </div>
+                    <div class="home-catalog-body">
+                        <a href="{% url 'album-detail' card.album.id %}" class="home-catalog-title">{{ card.album.title }}</a>
+                        <div class="home-catalog-artist">
+                            <img src="{{ card.album.artist.image_src|default:artist_placeholder }}" alt="{{ card.album.artist.name }}" class="home-catalog-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                            <p class="home-catalog-subtitle">{{ card.album.artist.name }}</p>
+                        </div>
+                        <p class="home-catalog-subtitle">
+                            {{ card.album.song_count }} song{{ card.album.song_count|pluralize }}
+                            {% if card.album.release_date %} &middot; {{ card.album.release_date|date:"Y" }}{% endif %}
+                        </p>
+                        <div class="home-catalog-actions">
+                            {% if request.user.is_authenticated and card.representative_song_id %}
+                                <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if card.representative_song_id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-favorite="{% if card.representative_song_id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                    {% if card.representative_song_id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                </button>
+                                <button class="btn icon-btn home-card-icon-btn like-btn{% if card.representative_song_id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ card.representative_song_id }}" data-is-liked="{% if card.representative_song_id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                    &#10084;
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </article>
+            {% empty %}
+                <div class="empty-state">No albums found.</div>
+            {% endfor %}
+        </div>
+
+        {% include 'music/partials/pagination.html' with page_obj=albums_page page_param='page' pagination_query_prefix=albums_pagination_query pagination_params=albums_pagination_params %}
+    </section>
+</div>
 {% endblock %}

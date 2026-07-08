@@ -3,12 +3,16 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    path("", views.home, name="home"),
+    path("", views.dashboard, name="home"),
+    path("browse/", views.dashboard, name="browse"),
+    path("dashboard/", views.dashboard, name="dashboard"),
+    path("library/", views.library, name="library"),
     path("search/", views.search_results, name="search-results"),
     path("search/suggestions/", views.search_suggestions, name="search-suggestions"),
-    path("listen/", views.listen_links, name="listen-links"),
     path("favorites/", views.favorite_songs, name="favorites"),
     path("songs/<int:pk>/favorite-toggle/", views.toggle_favorite_song, name="toggle-favorite-song"),
+    path("songs/<int:pk>/like-toggle/", views.toggle_like_song, name="toggle-like-song"),
+    path("reports/create/", views.create_metadata_report, name="create-metadata-report"),
     path("songs/<int:pk>/platform-options/", views.song_platform_options, name="song-platform-options"),
 
     path("songs/", views.songs, name="songs"),

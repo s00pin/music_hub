@@ -1,29 +1,34 @@
 {% extends 'music/base.html' %}
 
+{% block title %}{{ title }} | Music Hub{% endblock %}
+
 {% block content %}
 <section class="panel form-card">
-    <div class="section-head mb-3">
-        <h2>{{ title }}</h2>
+    <div class="section-head">
+        <h1 class="section-title title-with-icon">
+            <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v11.8a3.5 3.5 0 1 1-2-.1V7l10-2v10.8a3.5 3.5 0 1 1-2-.1V7z"></path></svg>
+            {{ title }}
+        </h1>
     </div>
 
-    <form method="post">
+    <form method="post" class="form-grid">
         {% csrf_token %}
         {% for field in form %}
             <div class="form-field">
                 <label for="{{ field.id_for_label }}">{{ field.label }}</label>
                 {{ field }}
-                {% if field.help_text %}<small class="entity-sub">{{ field.help_text }}</small>{% endif %}
-                {% for error in field.errors %}<div class="form-error">{{ error }}</div>{% endfor %}
+                {% if field.help_text %}<p class="entity-sub">{{ field.help_text }}</p>{% endif %}
+                {% for error in field.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
             </div>
         {% endfor %}
 
         {% for error in form.non_field_errors %}
-            <div class="form-error">{{ error }}</div>
+            <p class="form-error">{{ error }}</p>
         {% endfor %}
 
-        <div class="d-flex gap-2">
+        <div class="toolbar">
             <button class="btn btn-accent" type="submit">{{ submit_label }}</button>
-            <a href="{% url cancel_url %}" class="btn btn-soft">Cancel</a>
+            <a href="{% url cancel_url %}" class="btn btn-ghost">Cancel</a>
         </div>
     </form>
 </section>

@@ -1,145 +1,187 @@
 {% extends 'music/base.html' %}
 
+{% block title %}Search | Music Hub{% endblock %}
+{% block body_class %} page-dashboard{% endblock %}
+
 {% block content %}
-<section class="panel p-4">
-    <div class="section-head">
-        <h2>Search Results</h2>
-        <p class="entity-sub mb-0">{{ artist_count }} artist{{ artist_count|pluralize }}, {{ album_count }} album{{ album_count|pluralize }}, {{ song_count }} song{{ song_count|pluralize }}</p>
-        {% if external_lookup_summary.attempted and external_lookup_summary.created_total %}
-            <p class="entity-sub mb-0 mt-2">
-                No local matches were found, so we imported {{ external_lookup_summary.created_total }} record{{ external_lookup_summary.created_total|pluralize }} from MusicBrainz.
-            </p>
-        {% elif external_lookup_summary.attempted and external_lookup_summary.errors %}
-            <p class="entity-sub mb-0 mt-2">
-                No local matches were found and the MusicBrainz import could not complete.
-            </p>
-        {% endif %}
-    </div>
-
-    <div class="results-layout">
-        <aside class="panel filter-card">
-            <form action="{% url 'search-results' %}" method="get" class="filter-form">
-                <div class="mb-3">
-                    <label class="form-label">Keyword</label>
-                    <input class="form-control" type="text" name="q" value="{{ query }}" placeholder="Artist, album, song...">
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Result Type</label>
-                    <select class="form-select" name="type">
-                        <option value="all" {% if result_type == 'all' %}selected{% endif %}>All</option>
-                        <option value="artist" {% if result_type == 'artist' %}selected{% endif %}>Artists</option>
-                        <option value="album" {% if result_type == 'album' %}selected{% endif %}>Albums</option>
-                        <option value="song" {% if result_type == 'song' %}selected{% endif %}>Songs</option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Artist</label>
-                    <select class="form-select" name="artist">
-                        <option value="">Any artist</option>
-                        {% for artist in search_artists %}
-                            <option value="{{ artist.id }}" {% if selected_artist == artist.id|stringformat:'s' %}selected{% endif %}>{{ artist.name }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Album</label>
-                    <select class="form-select" name="album">
-                        <option value="">Any album</option>
-                        {% for album in search_albums %}
-                            <option value="{{ album.id }}" {% if selected_album == album.id|stringformat:'s' %}selected{% endif %}>{{ album.title }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Genre</label>
-                    <select class="form-select" name="genre">
-                        <option value="">Any genre</option>
-                        {% for genre in search_genres %}
-                            <option value="{{ genre }}" {% if selected_genre == genre %}selected{% endif %}>{{ genre }}</option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="d-grid gap-2">
-                    <button class="btn btn-accent" type="submit">Apply Filters</button>
-                    <a href="{% url 'search-results' %}" class="btn btn-soft">Clear</a>
-                </div>
-            </form>
-        </aside>
-
-        <div>
-            {% if artists or albums or songs %}
-                {% if artists %}
-                    <section class="panel p-3 mb-3">
-                        <div class="section-head mb-2"><h2>Artists</h2></div>
-                        <div class="card-grid">
-                            {% for artist in artists %}
-                                <a href="{% url 'artist-detail' artist.id %}" class="entity-card">
-                                    {% if artist.image %}
-                                        <img src="{{ artist.image.url }}" alt="{{ artist.name }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ artist_placeholder }}">
-                                    {% else %}
-                                        <img src="{{ artist_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                                    {% endif %}
-                                    <p class="entity-title">{{ artist.name }}</p>
-                                    <p class="entity-sub">Artist profile</p>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    </section>
-                {% endif %}
-
-                {% if albums %}
-                    <section class="panel p-3 mb-3">
-                        <div class="section-head mb-2"><h2>Albums</h2></div>
-                        <div class="card-grid">
-                            {% for album in albums %}
-                                <a href="{% url 'album-detail' album.id %}" class="entity-card">
-                                    {% if album.cover %}
-                                        <img src="{{ album.cover.url }}" alt="{{ album.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
-                                    {% else %}
-                                        <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                                    {% endif %}
-                                    <p class="entity-title">{{ album.title }}</p>
-                                    <p class="entity-sub">{{ album.artist.name }}</p>
-                                </a>
-                            {% endfor %}
-                        </div>
-                    </section>
-                {% endif %}
-
-                {% if songs %}
-                    <section class="panel p-3">
-                        <div class="section-head mb-2"><h2>Songs</h2></div>
-                        <div class="card-grid">
-                            {% for song in songs %}
-                                <div class="entity-card">
-                                    <a href="{% url 'song-detail' song.id %}">
-                                        {% if song.album and song.album.cover %}
-                                            <img src="{{ song.album.cover.url }}" alt="{{ song.title }}" class="entity-art mb-3" loading="lazy" data-fallback="{{ album_placeholder }}">
-                                        {% else %}
-                                            <img src="{{ album_placeholder }}" alt="placeholder image" class="entity-art mb-3" loading="lazy">
-                                        {% endif %}
-                                        <p class="entity-title">{{ song.title }}</p>
-                                    </a>
-                                    <p class="entity-sub">{{ song.artist.name }}{% if song.album %} &middot; {{ song.album.title }}{% endif %}</p>
-                                    <span class="tag">{{ song.genre }}</span>
-                                    <div class="mt-3">
-                                        <button class="favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}">{% if song.id in favorite_song_ids %}Favorited{% else %}Favorite{% endif %}</button>
-                                    </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </section>
-                {% endif %}
-            {% else %}
-                <div class="alert-soft-danger">No results found. Try a broader keyword or remove some filters.</div>
-            {% endif %}
+<div class="page-stack home-stack">
+    <section class="home-section section">
+        <div class="section-head">
+            <h1 class="section-title title-with-icon">
+                <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-5.2-5.2m2-5.3a7 7 0 1 1-14 0 7 7 0 0 1 14 0"></path></svg>
+                Search
+            </h1>
+            <p class="entity-sub">{{ artist_count }} artist{{ artist_count|pluralize }}, {{ album_count }} album{{ album_count|pluralize }}, {{ song_count }} song{{ song_count|pluralize }}</p>
         </div>
-    </div>
-</section>
-{% endblock %}
 
+        <div class="split-layout">
+            <aside class="panel filters">
+                <form action="{% url 'search-results' %}" method="get" class="form-grid">
+                    <div class="form-field">
+                        <label for="id_q">Keyword</label>
+                        <input id="id_q" type="text" name="q" value="{{ query }}" placeholder="Artist, album, or song">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_type">Result type</label>
+                        <select id="id_type" name="type">
+                            <option value="all" {% if result_type == 'all' %}selected{% endif %}>All</option>
+                            <option value="artist" {% if result_type == 'artist' %}selected{% endif %}>Artists</option>
+                            <option value="album" {% if result_type == 'album' %}selected{% endif %}>Albums</option>
+                            <option value="song" {% if result_type == 'song' %}selected{% endif %}>Songs</option>
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_genre">Genre</label>
+                        <select id="id_genre" name="genre">
+                            <option value="">Any</option>
+                            {% for genre in search_genres %}
+                                <option value="{{ genre }}" {% if selected_genre == genre %}selected{% endif %}>{{ genre }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-field">
+                        <label for="id_per_page">Show per page</label>
+                        <select id="id_per_page" name="per_page">
+                            {% for size in per_page_options %}
+                                <option value="{{ size }}" {% if size == per_page %}selected{% endif %}>{{ size }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="toolbar">
+                        <button class="btn btn-accent" type="submit">Search</button>
+                        <a href="{% url 'search-results' %}" class="btn btn-ghost">Clear</a>
+                    </div>
+                </form>
+            </aside>
+
+            <div>
+                {% if external_lookup_summary.attempted and external_lookup_summary.created_total %}
+                    <div class="alert">
+                        Imported {{ external_lookup_summary.created_total }} new record{{ external_lookup_summary.created_total|pluralize }} from MusicBrainz and re-ran the local search.
+                    </div>
+                {% elif external_lookup_summary.attempted and external_lookup_summary.errors %}
+                    <div class="alert">
+                        MusicBrainz import failed. Local database results are still shown.
+                    </div>
+                {% elif show_import_action %}
+                    <div class="alert">
+                        No local results found.
+                        <a class="btn btn-ghost" href="{% url 'search-results' %}?q={{ query|urlencode }}&type={{ result_type }}&genre={{ selected_genre|urlencode }}&import=1">Try MusicBrainz import</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    {% if artists %}
+        <section class="home-section section">
+            <div class="section-head">
+                <h3 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 12a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7m8 1a3 3 0 1 1 0-6 3 3 0 0 1 0 6M2 20a5.5 5.5 0 0 1 11 0v1H2zm11 1v-1a4.5 4.5 0 0 1 8 0v1z"></path></svg>
+                    Artists
+                </h3>
+            </div>
+            <div class="home-artist-grid">
+                {% for artist in artists %}
+                    <article class="home-catalog-card home-artist-card">
+                        <a href="{% url 'artist-detail' artist.id %}">
+                            <img src="{{ artist.image_src|default:artist_placeholder }}" alt="{{ artist.name }}" class="home-catalog-cover home-artist-cover" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                        </a>
+                        <div class="home-catalog-body">
+                            <a href="{% url 'artist-detail' artist.id %}" class="home-catalog-title">{{ artist.name }}</a>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% include 'music/partials/pagination.html' with page_obj=artists_page page_param='artist_page' pagination_query_prefix=artists_pagination_query pagination_params=artists_pagination_params %}
+        </section>
+    {% endif %}
+
+    {% if albums %}
+        <section class="home-section section">
+            <div class="section-head">
+                <h3 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v16H3zM7 8h10v8H7z"></path></svg>
+                    Albums
+                </h3>
+            </div>
+            <div class="home-album-grid">
+                {% for album in albums %}
+                    <article class="home-catalog-card home-album-card">
+                        <div class="home-catalog-media">
+                            <a href="{% url 'album-detail' album.id %}">
+                                <img src="{{ album.cover_src|default:album_placeholder }}" alt="{{ album.title }}" class="home-catalog-cover home-album-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                            </a>
+                        </div>
+                        <div class="home-catalog-body">
+                            <a href="{% url 'album-detail' album.id %}" class="home-catalog-title">{{ album.title }}</a>
+                            <p class="home-catalog-subtitle">{{ album.artist.name }}</p>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% include 'music/partials/pagination.html' with page_obj=albums_page page_param='album_page' pagination_query_prefix=albums_pagination_query pagination_params=albums_pagination_params %}
+        </section>
+    {% endif %}
+
+    {% if songs %}
+        <section class="home-section section">
+            <div class="section-head">
+                <h3 class="section-title title-with-icon">
+                    <svg class="title-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4v11.8a3.5 3.5 0 1 1-2-.1V7l10-2v10.8a3.5 3.5 0 1 1-2-.1V7z"></path></svg>
+                    Songs
+                </h3>
+            </div>
+            <div class="home-song-grid">
+                {% for song in songs %}
+                    <article class="home-song-card">
+                        <div class="home-song-media">
+                            <a href="{% url 'song-detail' song.id %}" class="home-song-cover-link">
+                                <img src="{{ song.album.cover_src|default:album_placeholder }}" alt="{{ song.title }}" class="home-song-cover" loading="lazy" data-fallback="{{ album_placeholder }}">
+                            </a>
+                            {% if song.genre %}
+                                <span class="home-song-genre">{{ song.genre }}</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="home-song-body">
+                            <div class="home-song-artist">
+                                <img src="{{ song.artist.image_src|default:artist_placeholder }}" alt="{{ song.artist.name }}" class="home-song-artist-avatar" loading="lazy" data-fallback="{{ artist_placeholder }}">
+                                <p class="home-song-artist-name">{{ song.artist.name }}</p>
+                            </div>
+                            <div class="home-song-meta">
+                                <a href="{% url 'song-detail' song.id %}" class="home-song-title">{{ song.title }}</a>
+                                <p class="home-song-subtitle">{% if song.album %}{{ song.album.title }}{% else %}Single{% endif %}</p>
+                            </div>
+                            <div class="home-song-card-actions">
+                                {% if request.user.is_authenticated %}
+                                    <button class="btn icon-btn home-card-icon-btn star-btn favorite-btn{% if song.id in favorite_song_ids %} is-favorite{% endif %}" data-song-id="{{ song.id }}" data-is-favorite="{% if song.id in favorite_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle favorite">
+                                        {% if song.id in favorite_song_ids %}&#9733;{% else %}&#9734;{% endif %}
+                                    </button>
+                                    <button class="btn icon-btn home-card-icon-btn like-btn{% if song.id in liked_song_ids %} is-liked{% endif %}" data-song-id="{{ song.id }}" data-is-liked="{% if song.id in liked_song_ids %}true{% else %}false{% endif %}" aria-label="Toggle like">
+                                        &#10084;
+                                    </button>
+                                {% endif %}
+                                <button class="btn icon-btn report-btn" data-target-kind="song" data-target-id="{{ song.id }}" aria-label="Report metadata issue">
+                                    !
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+            {% include 'music/partials/pagination.html' with page_obj=songs_page page_param='song_page' pagination_query_prefix=songs_pagination_query pagination_params=songs_pagination_params %}
+        </section>
+    {% endif %}
+
+    {% if not artists and not albums and not songs %}
+        <section class="home-section section">
+            <div class="empty-state">No matching records found.</div>
+        </section>
+    {% endif %}
+</div>
+{% endblock %}

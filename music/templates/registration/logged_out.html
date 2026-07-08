@@ -1,0 +1,17 @@
+{% extends 'music/base.html' %}
+
+{% block title %}Logged Out | Music Hub{% endblock %}
+
+{% block content %}
+<section class="auth-shell">
+    <article class="panel auth-panel auth-logged-out">
+        <p class="home-kicker">Session ended</p>
+        <h1 class="hero-title auth-title">You are logged out</h1>
+        <p class="auth-copy">Your session has ended safely. You can sign in again or return to the dashboard.</p>
+        <div class="toolbar auth-form-actions">
+            <a class="btn btn-accent" href="{% url 'login' %}">Login again</a>
+            <a class="btn btn-ghost" href="{% url 'home' %}">Go home</a>
+        </div>
+    </article>
+</section>
+{% endblock %}
